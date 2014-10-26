@@ -1,0 +1,349 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+{include tutorial/blog/contents}
+# Part Five - User Management
+<br />
+
+In Part Four, we have successfully created new entries in the web application. Now, lock it down.
+
+### Authenticating a User
+
+Not only can you create entries, but anyone who knows the admin URL can create entries as well. That's a huge security issue, so let's use the "publisher" table to authenticate users before allowing them to publish entries.
+
+There are a few components we'll need to authenticate users.
+
+* _Authorizer_ - The piece that automatically translates a login to a session, from the password store on up
+* _Login page and form_ - A place to enter your username and password
+* _Logout page_ - A place to kill off a session
+* _Access control_ - A way to pre-check that a user is allowed to access a method
+
+An authorizer is set up in your configuration file, and consists of two sides. One determines how a password is stored and retrieved (PasswordType), and the other determines how that user information is stored (Authorizer). Ambition has two authorizers built in: Flat, for flat files, and Htpasswd, for Apache-style htpasswd files. There are three hashed password types: SHA1, SHA256, and MD5. Plugins can provide new password types and authorizers, and the Almanna plugin provides the Almanna authorizer. 
+
+Creating an authorizer in your config consists of a series of keys that start with `authorizer.`. You can have multiple authorizers in an application, as long as they have different names. The name is the second part of the config key. The third part are the configuration options, which depend on the authorizer and password type used. The only universal config options are `type`, to determine the Authorizer, and `password_type` to determine the PasswordType. In this case, we're going to use the aforementioned Almanna authorizer, with the SHA1 password type. Everything below `type` is an Almanna config parameters, everything below `password_type` is a hashed/SHA1 config parameter. Open `config/parchment.conf`, and append the following to the bottom.
+
+    authorization.default.type = Almanna
+    authorization.default.entity_type = Parchment.Model.DB.Implementation.Publisher
+    authorization.default.id_field = publisher_id
+    authorization.default.username_field = username
+    authorization.default.password_field = password_hash
+    authorization.default.password_type = SHA1
+
+In plain English, we are creating an Almanna authorizer that checks the Publisher entity for active users. When determining a user, the unique identifier is in the `publisher_id` property, the username in the `username` property, and the hashed password is in `password_hash`. The password_hash is stored as a 40 character ASCII SHA1 hash, with no salt or iterations. Once again, this is only a demo.
+
+The next time you load your app, it will show that an authorizer called `default` is initialized.
+
+Next, let's create a login form. This should be pretty familiar. We need a username, a password, and a login button. First, create another form:
+
+    $ ambition form Login
+    ( info) Created 'src/Form/Login.vala'.
+
+Now, change out the example to include those three fields:
+
+    using Ambition.Form;
+    namespace Parchment.Form {
+    
+        /**
+         * Login Form.
+         */
+        public class Login : FormDefinition {
+    
+            [Description( nick = "Username" )]
+            public string username { get; set; }
+    
+            [Description( nick = "Password" )]
+            public string password { get; set; }
+    
+            [Description( nick = "Login" )]
+            public string submit { get; set; }
+    
+        }
+    }
+
+Create a view that renders that form appropriately, perhaps even attractively. Create a file called `src/View/Template/Admin/login.vtmpl`:
+
+    @parameters( Login form )
+    @using Parchment.Form
+    @using Ambition.Form
+    @process( "Wrapper.header", "Login" )
+    <style type="text/css">
+        .form-signin {
+            max-width: 300px;
+            padding: 19px 29px 29px;
+            margin: 0 auto 20px;
+            background-color: #fff;
+            border: 1px solid #e5e5e5;
+            -webkit-border-radius: 5px;
+               -moz-border-radius: 5px;
+                    border-radius: 5px;
+            -webkit-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+               -moz-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+                    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+          }
+    </style>
+    @if( form.has_errors() ) {
+        <div class="text-error">
+    @foreach( var error in form.get_form_errors() ) {
+        @{error}<br />
+    @}
+        </div>
+    @}
+    <form method="post" class="form-signin">
+    @{form.render_field( "username", new TBTextInput.with_class("span3") )}
+    @{form.render_field( "password", new TBPasswordInput.with_class("span3") )}
+    @{form.render_field( "submit", new TBSubmitButton() )}
+    </form>
+    @process("Wrapper.footer")
+
+Create the action method in `src/Controller/Admin.vala` that grabs the form and renders the page. Let's also add a logout method.
+
+    /**
+     * Log in to admin section.
+     * @param state State object.
+     */
+    public Result login( State state ) {
+        var form = new Form.Login();
+        if ( state.request.method == HttpMethod.POST ) {
+            form.bind_state( state );
+            if ( form.is_valid() ) {
+            }
+        }
+        return new Template.Admin.login(form);
+    }
+
+    /**
+     * Log out.
+     * @param state State object.
+     */
+    public Result logout( State state ) {
+        state.logout();
+        return new CoreView.Redirect("/");
+    }
+
+Create the line in `config/actions.conf` that ties the request together.
+
+    /admin/login                      GET,POST Admin.login
+    /admin/logout                     GET      Admin.logout
+
+Restart your application to make sure that /admin/login renders how you'd like it. You've built up almost everything required to get a user authenticated, so let's actually authenticate the user. If the user logs in successfully, pop them to the blog entry creation page. Edit your controller again, and in between the brackets around `form.is_valid()`, add the following:
+
+    if ( state.authorization.authorize( "default", form.username, form.password ) ) {
+        return new CoreView.Redirect("/admin");
+    } else {
+        form.add_form_error("Invalid username or password");
+    }
+
+That's it, you're authenticating! Let's show the user that they're logged in. Edit `src/View/Template/Wrapper/header.vtmpl`, and find `<ul class="nav">`. Insert a `li` in there that shows the currently active user, if there is one.
+
+    <ul class="nav">
+    @if ( state.has_user ) {
+        <li><a href="/admin/profile">Welcome, @{state.user.username}!</a></li>
+        <li><a href="/admin/logout">Logout</a></li>
+    @} else {
+        <li><a href="/admin/login">Login</a></li>
+    @}
+    </ul>
+
+Now, lock down your admin section to only allow authenticated users. For this example, we're going to use multiple-method actions to pre-check users going to Admin.entry. Open your Admin.vala controller, and create a new method that checks if we have a user. If so, let's do nothing, but if not, let's redirect and stop processing.
+
+    /**
+     * Check if a user is authenticated.
+     * @param state State object.
+     */
+    public Result check_user( State state ) {
+        if ( ! state.has_user ) {
+            state.response.done(); // Stop processing after this method
+            return new CoreView.Redirect("/admin/login");
+        }
+        return null;
+    }
+
+Edit the actions.conf file to send all protected URLs to that method first.
+
+    /admin/entry                      GET,POST Admin.check_user, Admin.entry
+    /admin                            GET,POST Admin.check_user, Admin.entry
+
+Restart your application, and the entry screen is now locked down! You can log
+in using the username "example" with the password "example".
+
+### Fix posting of an entry
+
+In the last section, we had the entry action set `publisher_id` to `1` for every post. Now that we have authentication, go back and set `entry.publisher_id` to `state.user.id` instead of `1`.
+
+### Edit your own user
+
+Now that we can log in as a user and have a secure area to work with, it'd be handy to change our password, display name, or username. All of this information resides in the publisher table, so let's hook up a form to that model and allow a logged in user to change those details.
+
+The first step is creating a new form for this section. We'll call this form "Profile".
+
+    $ ambition form Profile
+    ( info) Created 'src/Form/Profile.vala'.
+
+Stopping over and looking at the model representing the publisher table, there are three fields we care about changing: `username`, `password_hash`, and `display_name`. Our config shows that `password_hash` is a simple SHA1 hash of our plain text password, but we can use the authorizer to generate a compliant password from a user's entered password. Edit the form to have three user-entered fields, a Save button, and create a constructor that accepts our authorizer so we can encode our password. It should look something like this:
+
+    using Ambition;
+    using Ambition.Form;
+    namespace Parchment.Form {
+    
+    	/**
+    	 * Profile Form.
+    	 */
+    	public class Profile : FormDefinition {
+    		private Authorizer authorizer;
+    
+    		[Description( nick = "Display Name" )]
+    		public string display_name { get; set; }
+    
+    		[Description( nick = "Username" )]
+    		public string username { get; set; }
+    
+    		[Description( nick = "Password" )]
+    		public string password { get; set; }
+
+    		[Description( nick = "Save" )]
+    		public string submit { get; set; }
+
+    		public Profile( Authorizer authorizer ) {
+    			this.authorizer = authorizer;
+    		}
+    	}
+    }
+
+Here is where we have to get creative. The model is expecting a password_hash, and it should be a 40 character SHA1 hash of the desired password. Furthermore, we want some kind of value to appear to the user, and only bother changing that hash field if the user enters something new. Since Vala supports different backing fields and custom getters and setters, let's play a trick.
+
+We will create a backing field for password called `_password` with a default value of `12345678`. This will let us create a custom getter and setter, will show eight masked characters to the user, and allow us to compare values. We should also create a property for password_hash to be filled with a hashed password if one was changed. When `password` is set, we check if it is not `12345678`, and if it isn't, we run the authorizer's encoder to store into our hash field. The contents of the Profile class should look like this:
+
+    private Authorization.Authorize authorization;
+    private string _password = "12345678";
+    
+    [Description( nick = "Display Name" )]
+    public string display_name { get; set; }
+    
+    [Description( nick = "Username" )]
+    public string username { get; set; }
+    
+    [Description( nick = "Password" )]
+    public string password {
+    	get {
+    		return _password;
+    	}
+    	set {
+    		_password = value;
+    		if ( value != "12345678" ) {
+    			password_hash = authorization.encode_password( "default", value );
+    		}
+    	}
+    }
+
+    [Description( nick = "Save" )]
+    public string submit { get; set; }
+    
+    public string password_hash { get; set; }
+    
+    public Profile( Authorization.Authorize authorization ) {
+    	this.authorization = authorization;
+    }
+
+Let's move on to the controller action to edit our profile. Edit `src/Controller/Admin.vala`, and create a new method called `profile`. You're pretty much old hat at this, so for now, just create our new form (with state.authorization!), and output a template called `Admin.profile`.
+
+    /**
+     * Admin page to edit your account profile.
+     * @param state State object.
+     */
+    public Result profile( State state ) {
+    	var form = new Form.Profile( state.authorization );
+    	return new Template.Admin.profile(form);
+    }
+
+The view is going to be about as simple as our login form. Create `src/View/Template/Admin/profile.vtmpl`, and use the Login form as a guide. We don't want to center our form, so we'll shrink that a bit. Since we're reusing quite a bit, a good exercise would be pulling out items that are used often, like the form error display.
+
+    @parameters( Profile form )
+    @using Parchment.Form
+    @using Ambition.Form
+    @process( "Wrapper.header", "Profile" )
+    <style type="text/css">
+        .form-profile {
+            -webkit-border-radius: 5px;
+               -moz-border-radius: 5px;
+                    border-radius: 5px;
+            -webkit-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+               -moz-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+                    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+          }
+    </style>
+    @if( form.has_errors() ) {
+    	<div class="text-error">
+    @foreach( var error in form.get_form_errors() ) {
+        @{error}<br />
+    @}
+    	</div>
+    @}
+    <form method="post" class="form-profile">
+    @{form.render_field( "display_name", new TBTextInput.with_class("span4") )}
+    @{form.render_field( "username", new TBTextInput.with_class("span3") )}
+    @{form.render_field( "password", new TBPasswordInput.with_class("span3") )}
+    @{form.render_field( "submit", new TBSubmitButton() )}
+    </form>
+    @process("Wrapper.footer")
+
+Now, just to see it work, let's wire up our action. Add a new action after `entry` that will respond to /admin/profile, take a GET and POST request, and check that the user is valid before going to profile.
+
+    /admin/profile                    GET,POST Admin.check_user, Admin.profile
+
+Navigate to /admin/profile, log in if necessary, and make sure the form appears as you'd expect. Now, let's wire everything to the model so we can see what exists and change what we need to. Open `src/Controller/Admin.vala`, and head to your `profile()` definition.
+
+Get the Entity matching the current user by calling `state.user.get_object()`, and bind it to the existing form.
+
+    var user = (Implementation.Publisher) state.user.get_object();
+    user.bind_data_to(form);
+
+Take action if the incoming request is a POST.
+
+    if ( state.request.method == HttpMethod.POST ) {
+    }
+
+Within that block, bind the state to the form, so the form is filled out. Make sure that the result is valid, especially if you extend the form validation.
+
+    form.bind_state(state);
+    if ( form.is_valid() ) {
+    }
+
+If the form is valid, bind the data from the form to the publisher while ignoring nulls, save the
+changes to the publisher, and reauthenticate as the new user. Once that's complete, redirect back to the admin section.
+
+		publisher.bind_data_from( form, true );
+		publisher.save();
+		state.authorize( "default", publisher.username, form.password );
+		return new CoreView.Redirect("/admin");
+
+The final method should look like this:
+
+    var form = new Form.Profile( state.authorization );
+    
+    // Bind data from the logged in user
+    var publisher = (Implementation.Publisher) state.user.get_object();
+    publisher.bind_data_to(form);
+    
+    if ( state.request.method == HttpMethod.POST ) {
+    	form.bind_state(state);
+    	if ( form.is_valid() ) {
+    		publisher.bind_data_from( form, true );
+    		publisher.save();
+    		state.authorize( "default", publisher.username, form.password );
+    		return new CoreView.Redirect("/admin");
+    	}
+    }
+    
+    return new Template.Admin.profile(form);
+
+Reload your application and give it a shot. You can now change your username, display name, and password.
+
+[[tutorial/blog/tweaks|Go on to Part Six - Edits and Tweaks >>]]
+
+</section>
+</div>

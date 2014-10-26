@@ -1,0 +1,124 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+# Installing on CentOS/RHEL/Scientific Linux 6
+<br />
+
+This document assumes an installation from git, but can be modified to use source packages downloaded from ambitionframework.org.
+
+
+Install required packages:
+
+    sudo yum install gcc gcc-c++ make cmake readline-devel libsoup-devel libgda-devel git intltool libffi-devel readline-devel gnome-common
+
+We will need to install a whole series of dependencies from source, as they are either unavailable or outdated within the yum repositories. This includes cmake 2.8.12.1, glib 2.32, vala 0.20.1, libgee0.8, json-glib, libgda, and couchdb-glib.
+
+
+To install CMake, download [[http://www.cmake.org/files/v2.8/cmake-2.8.12.1.tar.gz|cmake-2.8.12.1]].
+
+    tar cmake-2.8.12.1.tar.gz
+    cd cmake-2.8.12.1
+    ./configure
+    gmake
+    sudo gmake install
+
+To install GLib, download [[http://ftp.gnome.org/pub/gnome/sources/glib/2.32/glib-2.32.4.tar.xz|glib-2.32.4]].
+
+    tar glib-2.32.4.tar.xz
+    cd glib-2.32.4
+    ./configure
+    make
+    sudo make install
+
+
+To install Vala, download [[http://download.gnome.org/sources/vala/0.20/vala-0.20.1.tar.xz|vala-0.20.1]].
+
+    tar vala-0.20.1.tar.xz
+    cd vala-0.20.1
+    ./configure GLIB_CFLAGS="-I/opt/glib/include/glib-2.0 -I/opt/glib/lib/glib-2.0/include" GLIB_LIBS="-L/opt/glib/lib" GMODULE_CFLAGS="-I/opt/glib/include/glib-2.0 -I/opt/glib/lib/glib-2.0/include" GMODULE_LIBS="-L/opt/glib/lib" GTHREAD_CFLAGS="-I/opt/glib/include/glib-2.0 -I/opt/glib/lib/glib-2.0/include" GTHREAD_LIBS="-L/opt/glib/lib"
+    make
+    sudo make install
+
+
+To install Gee, download [[http://download.gnome.org/sources/libgee/0.8/libgee-0.8.7.tar.xz|libgee-0.8.7]].
+
+    tar libgee-0.8.7.tar.xz
+    cd libgee-0.8.7
+    ./configure
+    make
+    sudo make install
+
+
+To install Json-Glib, download [[http://ftp.gnome.org/pub/GNOME/sources/json-glib/0.14/json-glib-0.14.2.tar.xz|json-glib-0.14.2]].
+
+    tar xf json-glib-0.14.2.tar.xz
+    cd json-glib-0.14.2
+    ./configure
+    make
+    sudo make install
+
+
+To install LibGDA, download [[http://ftp.gnome.org/pub/GNOME/sources/libgda/5.0/libgda-5.0.4.tar.xz|libgda-5.0.4]]. You may want to alter the configure line to include other database types you're interested in, and install dependencies for them. By default, only SQLite is included.
+
+    tar xf libgda-5.0.4.tar.xz
+    cd libgda-5.0.4
+    CFLAGS="-I/usr/include/libxml2" ./configure COREDEPS_CFLAGS="-I/opt/glib/include/glib-2.0 -I/opt/glib/lib/glib-2.0/include" COREDEPS_LIBS="-L/opt/glib/lib"
+    make
+    sudo make install
+
+
+To install CouchDB-GLib, install from Git.
+
+    git clone https://github.com/GNOME/couchdb-glib
+    cd couchdb-glib
+
+
+Create a work directory:
+
+    mkdir ambition-src
+
+
+Install libgscgi. Feel free to ignore warnings, but there shouldn't be any errors.
+
+    git clone https://github.com/AmbitionFramework/libgscgi.git
+    cd libgscgi
+    make
+    sudo make install
+    cd ..
+
+Install Almanna.
+
+    git clone https://github.com/AmbitionFramework/almanna.git
+    cd almanna
+    mkdir build
+    cd build
+    export PKG_CONFIG_PATH="/opt/glib/lib/pkgconfig:/usr/local/lib/pkgconfig"
+    cmake ..
+    make
+    sudo make install
+    sudo ln -s /usr/lib/pkgconfig/almanna-0.1.pc /usr/share/pkgconfig/
+    sudo ln -s /usr/lib/libalmanna-0.1.so /usr/lib64/
+    cd ../..
+
+Install Ambition.
+
+    git clone https://github.com/AmbitionFramework/ambition.git
+    cd ambition
+    mkdir build
+    cd build
+    cmake ..
+    make
+    sudo make install
+    sudo ln -s /usr/lib/pkgconfig/ambition-0.1.pc /usr/share/pkgconfig/
+    sudo ln -s /usr/lib/libambition-0.1.so /usr/lib64/
+    cd ../..
+
+Ambition is ready to use!
+
+</section>
+</div>

@@ -1,0 +1,56 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+# Frequently Asked Questions
+<br />
+
+## Where can I ask a question?
+
+The best place to ask a question that isn't available here is on the [[https://groups.google.com/forum/#!forum/ambition-framework|support forum]].
+
+
+## Is Ambition production ready?
+
+Given how new the project is, there is likely more work to be done to make Ambition approved for production. However, all of the support infrastructure is written in and using the Ambition framework.
+
+
+## Why create a web application framework in Vala?
+
+This is a very short question with a potentially long answer. The first answer to this question is "because we can". Vala did not have many options for creating a reasonable web application, so we are filling a void. The larger question, though, is whether it's a good idea. Vala is a very expressive, powerful, and dynamic language with hooks deep into the C layer, while providing a language that is easy to consume for a developer familiar with object oriented development. This, by itself, makes it a great language to quickly develop a web application. The bonus is, compared with many other choices, such as Java, C#, Ruby, or Perl, Vala compiles to a native application with very simple library requirements. With careful coding tactics, a web application written in Vala can have a much smaller memory and CPU footprint than an equivalent application in other languages.
+
+No language can save a developer from themselves, but it can certainly help the process along.
+
+
+## Why is the code style different from other Vala examples?
+
+Code style can be argued and debated forever, and consensus will never be reached. The style used with the Ambition sources is similar to patterns in other OO languages, and is internally consistent. While contributing to Ambition means that the existing style must be followed, an application built with Ambition can use any code style as long as it compiles.
+
+
+## Do any editors support syntax highlighting for Ambition templates?
+
+As of right now, syntax highlighting has only been created for [[http://www.sublimetext.com|Sublime Text 2]]. In the Ambition source directory, under `support/sublime-text-2`, copy the Ambition directory to your Packages directory. Provided the Vala plugin has already been installed, `vtmpl` files will be syntax highlighted with both Vala and HTML highlighting. A syntax definition is also available for Ambition configuration files, and a snippet exists for creating new Controller classes.
+
+
+## How is Ambition licensed?
+
+The source for the Ambition framework is licensed under the Apache 2.0 license, a permissive license that allows anyone to use the source under most circumstances, and distribute work that links to this library freely, even for commercial use. More information is available in the `LICENSE` file in the source.
+
+
+## How do I report a bug?
+
+A bug is sometimes a support question disguised as a bug. The best place to get some assistance is on the [[https://groups.google.com/forum/#!forum/ambition-framework|support forum]], to see if anyone else has seen the same issue and moved past it. If you're sure there's an issue in the framework, visit our home at [[http://www.github.com/AmbitionFramework/ambition||GitHub]], click `Issues`, and file a report there.
+
+
+## How can I help? What if I have a patch?
+
+All development on the Ambition framework and associated libraries is done through Git through [[http://www.github.com/AmbitionFramework|GitHub]]. From there, you may check out, browse, or fork the code as needed. If you have a suggested patch, create a pull request and we'll review it for inclusion in a future release.
+
+There is more information at [[Join]].
+
+</section>
+</div>

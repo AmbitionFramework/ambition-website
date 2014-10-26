@@ -1,0 +1,100 @@
+ol, ul {
+	list-style: disc outside none !important;
+	padding-left: 40px !important;
+}
+				
+#content {
+	margin-top: -40px;
+}
+
+#content h3 {
+	color: #96a9b5;
+	font-size: 1.1em;
+}
+
+p {
+	margin-bottom: 0.8em !important;
+}
+
+#loginbox {
+	position: absolute;
+	right: 4px;
+	top: 4px;
+	color: #444;
+	font-size: 4px;
+}
+
+#loginbox a {
+	color: #444;
+}
+
+.logoimage {
+	margin-top: 50px;
+}
+
+#content p, #content li, #content input, #content textarea {
+	font-family: Gill Sans, Candara, Helvetica, Arial, sans-serif;
+	font-size: 80%;
+}
+
+#content code {
+	font-family: Consolas, Monaco, Courier New, monospace;
+	font-size: 80%;
+}
+
+#content pre code {
+	line-height: 100%;
+	margin-bottom: 10px;
+	margin-left: 20px;
+	margin-right: 20px;
+	padding: 12px;
+}
+#clr {
+        float: clear;
+        clear: both;
+}
+h1 {
+        margin-top: 0;
+}
+#edit_pane {
+        float: left;
+        position: relative;
+        width: 49.8%;
+        height: 420px;
+}
+#edit_textarea {
+        position: absolute;
+        left: 4px;
+        right: 4px;
+        top: 4px;
+        bottom: 30px;
+}
+#edit_buttons {
+        position: absolute;
+        bottom: 4px;
+        left: 4px;
+}
+#preview_pane {
+        float: left;
+        width: 49.8%;
+}
+#preview_area {
+        overflow: scroll;
+        height: 372px;
+        margin: 6px;
+        border: 1px solid #999;
+        padding: 4px;
+}
+.errormessage {
+        padding: 6px;
+        background-color: #fdd;
+        border: 1px dotted #000;
+}
+
+em {
+	font-weight: bold;
+}
+
+#header nav {
+	width: 622px;
+}

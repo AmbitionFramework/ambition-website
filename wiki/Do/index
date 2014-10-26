@@ -1,0 +1,22 @@
+<span></span>
+<div class="12u-first">
+<section>
+
+# Do: Getting Ambition
+
+## Retrieving Ambition from source
+
+The source for the Ambition Framework and supporting libraries is hosted at [[http://www.github.com|GitHub]].
+
+_[[https://github.com/AmbitionFramework/ambition|Ambition]]_ contains the core library and supporting binaries.
+
+_[[https://github.com/AmbitionFramework/libgscgi|libgscgi]]_ is required by the SCGI plugin to support connecting to any SCGI-compliant web server, such as nginx or Apache.
+
+_[[https://github.com/AmbitionFramework/almanna|Almanna]]_ is the database-agnostic ORM supported by the Almanna plugin for Almanna.
+
+## Installing Ambition
+
+Complete installation instructions are available at [[tutorial/install|Installing the Ambition Web Framework]].
+
+</section>
+</div>

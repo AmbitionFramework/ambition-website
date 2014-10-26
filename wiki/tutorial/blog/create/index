@@ -1,0 +1,267 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+{include tutorial/blog/contents}
+# Part Four - Create Some Entries
+<br />
+
+In Part Three, we presented live data from the database in a reasonable way. Now, let's get a simple administration area that allows us to post new entries.
+
+### Supporting a Session
+
+A session keeps state between requests from the same user. Most implementations push a cookie to the user's browser, and then store associated data on the server. Ambition supports this, and allows multiple ways to store a session, including using Almanna.
+
+Since we have a database, we're using Almanna, and one of the tables we created was *session*, we want to store our sessions in that stack. Let's tell your application to use that table for storing session data. Open up `config/parchment.conf`, and look for this block in configuration:
+
+    # Uncomment to define a session.
+    # session.store = StorableFile
+    # session.expires = 3600
+    # storable.file.path = /tmp
+
+The default configuration, when uncommented, stores sessions in individual files in the /tmp directory. It expires in 3600 seconds, or one hour. This will work, but it isn't what we want. For a database session, uncomment _session.store_ and _session.expires_, and delete the line containing _storable.file.path_. _session.store_ contains the type of session store available. Since we will be using Almanna, change StorableFile to StorableAlmanna. Add a new key, "session.entity_type", and match it to your Session entity's full name. In this case, it will be `Parchment.Model.DB.Implementation.Session`.
+
+The Session implementation needs to add an additional interface, _AlmannaSession_, so that the session knows how to access it. Edit `src/Model/DB/Implementation/Session.vala`, and add `,Ambition.Session.AlmannaSession` after `Parchment.Model.DB.Entity.Session`.
+
+Once your application is restarted, feel free to reload the page. A session will be created, and a record will exist in your session table.
+
+### Creating our Admin Controller and our first form
+
+Our new administrative area could use a controller. It may need more later, but for this purpose, just one will be fine. Much like our Entries controller, we can use the Ambition command to create our Admin controller.
+
+    $ ambition controller Admin
+    ( info) Created 'src/Controller/Admin.vala'.
+
+To get started with, we really just need a page that allows us to add a new entry, so it makes sense to start there. Edit `src/Controller/Admin.vala`, and change the action method to do the following:
+
+* The action method should be descriptive, so we should change `index` to `entry`. Change the valadoc to reflect the new functionality.
+* The entry view should not be the default, so create a new Template.Admin.Entry object with no parameters.
+
+The controller should now look a little like this:
+
+    using Ambition;
+    using Parchment.View;
+    namespace Parchment.Controller {
+    
+        /**
+         * Admin Controller.
+         */
+        public class Admin : Object {
+    
+            /**
+             * Admin page to create/edit entries.
+             * @param state State object.
+             */
+            public Result entry( State state ) {
+                return new Template.Admin.entry();
+            }
+    
+        }
+    }
+
+Again, like our Entries controller, this controller is useless without an action. Edit `config/actions.conf`, and add a route from /admin to Admin.entry, and from /admin/entry to Admin.entry. Do them in reverse order, as Ambition goes from top to bottom and exits on the first match. Your actions.conf file should look like this, minus the documentation:
+
+    /                                 GET      Entries.list
+    /entries/[entry_id]               GET      Entries.view
+    /admin/entry                      GET,POST Admin.entry
+    /admin                            GET,POST Admin.entry
+
+In this screen, we'll be taking input from the user, and the easiest way to collect that data is with a [[tutorial/forms|Form]]. A form is a special class designed to match an HTML form or a similar input method that sends parameters over HTTP. A form can bind and sanitize user data, validate input, handle errors, and easily bind that data to a database entity or other class. We'll be creating a form to parse user data, namely, the subject line and body text of a blog entry. Start by creating a new Form class.
+
+    $ ambition form Entry
+    ( info) Created 'src/Form/Entry.vala'.
+
+An example Form will be created, and it should look something like this:
+
+    using Ambition.Form;
+    namespace Parchment.Form {
+    
+        /**
+         * Entry Form.
+         */
+        public class Entry : FormDefinition {
+    
+            [Description( nick = "Example" )]
+            public string example { get; set; }
+    
+        }
+    }
+
+The line in brackets is an _annotation_, and Vala uses it as a hint to perform actions on the line or declaration that follows it. Ambition forms utilize the _Description_ annotation to provide metadata about a form. In this case, _nick_ tells Ambition that the label for the property is "Example". If a _blurb_ was added, that would serve as the hint text for a field. Below the annotation is a standard Vala property, which should match the name of the field that would be rendered to the user.
+
+To make this form relevant to us, we need to change the example property and add an additional property, so we can collect a title in a regular text field, and blog content in a textarea field. Once you're done, it should look close to this:
+
+    using Ambition.Form;
+    namespace Parchment.Form {
+    
+        /**
+         * Entry Form.
+         */
+        public class Entry : FormDefinition {
+    
+            [Description( nick = "Title" )]
+            public string title { get; set; }
+    
+            public string content { get; set; }
+
+            [Description( nick = "Publish" )]
+            public string submit { get; set; }
+    
+        }
+    }
+
+We probably also want validation, so let's override `validate_form` to check that both fields exist. Add this below the `submit` property.
+
+        public override bool validate_form() {
+            if ( title == null || title.length == 0 ) {
+                this.add_field_error( "title", "Missing title" );
+            }
+            if ( content == null || content.length == 0 ) {
+                this.add_field_error( "content", "Missing content" );
+            }
+
+            return !this.has_errors();
+        }
+
+Before we can render this whole thing, we need a view for the entry editor. Create the `src/View/Template/Admin` directory, and then create a file called `src/View/Template/Admin/entry.vala`. You'll want to include the header and footer, and render the form that allows for the entry of a subject line, and the text of a blog entry. The easiest way to do this is by rendering the form with helpers. Not only can the form parse incoming data, but it can assist in rendering the fields you have set up. In the Ambition.Form namespace are a series of field definitions. They include the three types we need -- _TextInput_, _Textarea_, and _SubmitButton_. But, we're using Twitter Bootstrap, and there may be special formatting we need to make it fit in with the rest of our application. Plugins to the rescue! Let's get a TwitterBootstrap plugin.
+
+    $ ambition plugin add TwitterBootstrap
+    Found TwitterBootstrap 0.1.0.
+    Added plugin 'TwitterBootstrap' to project.
+
+This adds a series of helpers with a 'TB' prefix, so we can render forms in a way that TwitterBootstrap likes. If your own UI uses a special format, you can create custom renderers by extending [[/static/valadoc/ambition/Ambition.Form.FieldRenderer.html|FieldRenderer]]. In the meantime, let's try our view. To render a field in a form, first we need to accept a form instance in our parameters. Once we have that form object, rendering fields is easy. Call `form.render_field( fieldname, renderer )`, where renderer is a new instance of a FieldRenderer. Our subject would look like this:
+
+    @{form.render_field( "title", new TBTextInput() )}
+
+Some renderers have other optional constructors to help customize output. For TextInput and Textarea, there's an optional `with_class()` constructor to add classes to the output. So, to help make these usable, we'll use that constructor.
+
+    @{form.render_field( "title", new TBTextInput.with_class("span9") )}
+
+Once you've completed this view, it should look close to this:
+
+    @parameters( Entry form )
+    @using Parchment.Form
+    @using Ambition.Form
+    @process( "Wrapper.header", "Create an Entry" )
+    <style type="text/css">
+        textarea { height: 360px; }
+    </style>
+
+    <form method="post">
+    @{form.render_field( "title", new TBTextInput.with_class("span9") )}
+    @{form.render_field( "content", new TBTextarea.with_class("span9") )}
+    @{form.render_field( "submit", new TBSubmitButton() )}
+    </form>
+    @process("Wrapper.footer")
+
+Let's see if this is rendering correctly. The last step is to create the form in our controller, and pass it into our view. Edit `src/Controller/Admin.vala` again, add `using Parchment;` to the top of the file, and change the return statement to include `new Form.Entry()` in the parameters. Try running your application, and visiting `/admin`.
+
+### Save real data to the database
+
+The final step is to wire the form up to the database, and provide status to the view.
+
+Add `Parchment.Model.DB` to the list of requirements.
+
+Pull out `new Form.Entry()` from the parameters, put it into a variable, and place that variable into the parameters.
+
+    var form = new Form.Entry();
+    return new Template.Admin.entry(form);
+
+After creating the form, check if this is a POST. If so, bind the request to the form, and make sure the parameters are valid.
+
+
+    if ( state.request.method == HttpMethod.POST ) {
+        form.bind_state( state );
+        if ( form.is_valid() ) {
+        }
+    }
+
+If the form is valid, create a new row in the database with the data from the form, and boilerplate for the publisher_id field, as we'll deal with that later.
+
+    var entry = new Implementation.Entry();
+    entry.bind_data_from(form);
+    entry.publisher_id = 1;
+    entry.save();
+
+Clear the form if it's been saved.
+
+    form = new Form.Entry();
+
+Now, trap any potential database errors by wrapping the save and reset in a try block, and store the entry_id in the session so we can bring it up later.
+
+    try {
+        entry.save();
+        form = new Form.Entry();
+        state.session.set_value( "entry_id", entry.entry_id.to_string() );
+    } catch (EntityError e) {
+        form.add_form_error("Unable to save entry.");
+    }
+
+This will finally look something like this:
+
+    using Ambition;
+    using Parchment;
+    using Parchment.View;
+    using Parchment.Model.DB;
+    namespace Parchment.Controller {
+    
+        /**
+         * Admin Controller.
+         */
+        public class Admin : Object {
+    
+            /**
+             * Admin page to create/edit entries.
+             * @param state State object.
+             */
+            public Result entry( State state ) {
+                var form = new Form.Entry();
+                if ( state.request.method == HttpMethod.POST ) {
+                    form.bind_state( state );
+                    if ( form.is_valid() ) {
+                        var entry = new Implementation.Entry();
+                        entry.bind_data_from(form);
+                        entry.publisher_id = 1;
+                        try {
+                            entry.save();
+                            form = new Form.Entry();
+                            state.session.set_value( "entry_id", entry.entry_id.to_string() );
+                        } catch (Almanna.EntityError e) {
+                            form.add_form_error("Unable to save entry.");
+                        }
+                    }
+                }
+                return new Template.Admin.entry(form);
+            }
+    
+        }
+    }
+
+Now, add some success and error reporting to the view. The form automatically highlights fields that have an error in validation, so we only need to call out that there are errors. Otherwise, if the entry is created successfully, we should show a message. In the controller, we're setting the entry_id in the session, so we can use that within the view. Underneath the header include, or in the example above, the style declaration, let's add these two if statements to show success, failure, or neither:
+
+    @if( state.session.has_value("entry_id") ) {
+        <div class="text-success">
+            Entry created successfully!
+            <a href="/entries/@{state.session.delete_value("entry_id")}">View it now</a>.
+        </div>
+    @}
+    @if( form.has_errors() ) {
+        <div class="text-error">
+            Please correct the errors below.
+        </div>
+    @}
+
+The first block will check if entry_id exists -- which only will happen with a successful form *and* a successful database call. It will show success, and provide a link to the entry. Note the use of `delete_value` -- it will both return the current value of that item as well as delete it from the session, so the message won't appear again unless a new entry is created.
+
+The second block will only ask the form if it has errors, and if so, display an error message.
+
+You can now create new entries!
+
+[[tutorial/blog/user|Go on to Part Five - User Management >>]]
+
+</section>
+</div>

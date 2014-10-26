@@ -1,0 +1,68 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+# Creating your first application
+<br />
+
+Once the Ambition Framework is installed, most of the work scaffolding and running your application is done with the `ambition` application. You'll be using this tool from your command line to get started.
+
+## Scaffolding
+
+Change to a directory you'd like to use to store your Ambition projects. Next, figure out a name for your application. Keep it as one word, without spaces, and use `ambition` to scaffold your application. This will create a new directory in whatever directory you are currently in, and it will be very wordy about it.
+
+    [/home/foo/projects] $ ambition new Foo
+    Created default: Foo/.ambition
+    Created default: Foo/.gitignore
+    Created default: Foo/CMakeLists.txt
+    Created default: Foo/cmake/FindVala.cmake
+    Created default: Foo/cmake/ValaVersion.cmake
+    Created default: Foo/cmake/README
+    Created default: Foo/cmake/ValaPrecompile.cmake
+    Created default: Foo/cmake/Makefile
+    Created default: Foo/cmake/README.Vala.rst
+    Created default: Foo/cmake/ParseArguments.cmake
+    Created default: Foo/cmake/Tests.cmake
+    Created default: Foo/cmake/GObjectIntrospectionMacros.cmake
+    Created default: Foo/cmake/GSettings.cmake
+    Created default: Foo/cmake/Translations.cmake
+    Created default: Foo/src/CMakeLists.txt
+    Created default: Foo/src/Application.vala
+    Created default: Test/src/Main.vala
+    Created default: Foo/src/Controller/Root.vala
+    Created default: Foo/src/View/Template/Root/index.vtmpl
+    Created default: Foo/test/CMakeLists.txt
+    Created default: Test/test/CMakeLists.txt
+    Created default: Test/test/InitializeTests.vala
+    Created default: Test/test/ApplicationTest.vala
+    Created default: Foo/config/foo.conf
+    Project Foo created. Type "cd Foo", and then "ambition run" to test.
+    [/home/foo/projects] $ 
+
+## Running your first application
+
+Now that your project is created, it's ready to try out for the first time. You'll just need to build your application for the first time using the instructions `ambition` provided. Note that some warnings may be thrown -- this is normal with some Vala code.
+
+    [/home/foo/projects] $ cd Foo
+    [/home/foo/projects/Foo] $ ambition run
+    ( info) Resolving dependencies...
+    ( info) Running cmake...
+    ( info) Building project...
+    ( info) Executing application...
+    ( info) Registered plugin 'Session'.
+    (debug) Routes:
+    (debug) G  ^\/$                           /root/index
+    (debug) G  ^\/favicon.ico$                /static
+    (debug) G  ^/static                       /static
+    ( info) Starting Raw engine on port 8099.
+
+Now, your web application is running! A few debug lines are displayed for you, showing you the current status of your application. In this case, we're using the Session plugin to provide client sessions to the end user, and we have three "routes" in place. The root goes to the "Root" controller and the "index" method, and /favicon.ico and anything under /static are handled by the "static" controller. The "G" stands for GET, meaning those routes only respond to HTTP GET requests. The "Raw" engine is available by default, which provides a complete web server implementation to test against, and can be accessed on port 8099.
+
+To take a look at the result, launch your favorite web browser, and enter "[[http://localhost:8099]]".
+
+</section>
+</div>

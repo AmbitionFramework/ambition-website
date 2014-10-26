@@ -1,0 +1,57 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+# Installing on Mac OS X 10.8 with Homebrew
+<br />
+
+This document assumes an installation from git, but can be modified to use source packages downloaded from ambitionframework.org.
+
+
+Install required packages:
+
+    homebrew install vala libgee json-glib couchdb readline cmake libgda libsoup libxml2
+
+Prepare symlinks:
+
+    ln -s /usr/local/opt/libxml2/lib/pkgconfig/libxml-2.0.pc /usr/local/lib/pkgconfig/
+
+Install libgscgi. Feel free to ignore warnings, but there shouldn't be any errors.
+
+    git clone https://github.com/AmbitionFramework/libgscgi.git
+    cd libgscgi
+    make
+    sudo make install
+    sudo ln -s /usr/share/pkgconfig/libgscgi-1.0.pc /usr/local/lib/pkgconfig/
+    cd ..
+
+Install Almanna.
+
+    git clone https://github.com/AmbitionFramework/almanna.git
+    cd almanna
+    mkdir build
+    cd build
+    cmake ..
+    make
+    sudo make install
+    cd ../..
+
+Install Ambition.
+
+    git clone https://github.com/AmbitionFramework/ambition.git
+    cd ambition
+    mkdir build
+    cd build
+    cmake ..
+    make
+    sudo make install
+    cd ../..
+
+Ambition is ready to use!
+
+</section>
+</div>

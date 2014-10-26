@@ -1,0 +1,38 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+# What is MVC?
+<br />
+
+The MVC design pattern, or [[http://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller|Model View Controller]], is a highly favored model for both desktop and web application design, and is the core default design of an Ambition web application.
+
+To summarize the pattern, an application is split into separate layers, the Model, the View, and the Controller. While you can have one model, one view, and one controller in an application, a layer conveys that there can be many models, views, and controllers to fit the pattern.
+
+## The Model
+The _Model_ layer represents the information or data to query and manipulate from other layers in the application. A good model adds a separation and developer-centric interface to the raw data being accessed, for instance, an ORM layer on top of a relational database, or methods to retrieve and parse an external web service. The layer does not necessarily equate to 'a ORM', or lock you into a certain data access layer, as the Model should be data access agnostic.
+
+## The View
+The _View_ layer represents the presentation of data from the model to the end client, whether it be a web browser, or a consumer of a service. In Ambition, the view is rendered over an HTTP connection, but multiple views can be created for the same data, such as a mobile view, a desktop view, and a JSON view.
+
+## The Controller
+The _Controller_ layer marshals a user request or an event through the architectural layers of your application. In Ambition, this corresponds to a web request, parsing the data in that request, performing actions in a model, and passing data to a view.
+
+## Organization
+There are many schools of thought regarding how to organize a MVC application, and what constitutes an action in a model or a controller. It is up to you to decide how to organize an application to be easy to extend and easy to manipulate, as there is not a "right answer".
+
+A common method is called "Thin Controller, Fat Model". The idea is that a controller should be a simply marshal data from one component to another. Business logic and data access and manipulation should occur inside of methods in a model or other component, and the end result can then be passed to a view layer to be rendered. According to this method, pre-rendering of data or data manipulation should not be done in a controller. The downside is that fat models can get unwieldy very quickly, and finding a balance can sometimes be difficult.
+
+## Executing MVC in Ambition
+
+Each of the layers in Ambition is stored in a different directory, and represented by a different namespace in your application.
+
+* _src/Controller_ or _YourApp.Controller_ contains all of the controllers for your application. Each class can have multiple methods, and those methods will be endpoints for HTTP requests. It may be easier to have a controller class for a major component of your application, like "Admin" or "Auth", and methods for actions within that component.
+* _src/Model_ or _YourApp.Model_ contains all of the models for your application. Organization is at the discretion of the developer. Almanna will generate classes within the Model.DB namespace.
+* _src/View_ or _YourApp.View_ contains all of the views for your application. Each view is a subclass of Result. Your templates will be generated within the View.Template namespace.
+</section>
+</div>

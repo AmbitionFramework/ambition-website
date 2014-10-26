@@ -1,0 +1,209 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+# Templates
+<br />
+
+## Contents
+
+* [[/wiki/tutorial/templates#anchor_introduction|Introduction]]
+* [[/wiki/tutorial/templates#anchor_a_simple_example|A Simple Example]]
+* [[/wiki/tutorial/templates#anchor_template_lifecycle|Template Lifecycle]]
+* [[/wiki/tutorial/templates#anchor_basic_syntax|Basic Syntax]]
+* [[/wiki/tutorial/templates#anchor_allowed_keywords|Allowed Keywords]]
+* [[/wiki/tutorial/templates#anchor_adding_comments|Adding Comments]]
+* [[/wiki/tutorial/templates#anchor_accessing_state|Accessing State (Request and Response)]]
+* [[/wiki/tutorial/templates#anchor_accessing_configuration|Accessing Configuration]]
+* [[/wiki/tutorial/templates#anchor_stashing_data_along_the_way|Stashing Data Along the Way]]
+* [[/wiki/tutorial/templates#anchor_importing_new_namespaces|Importing new namespaces]]
+* [[/wiki/tutorial/templates#anchor_changing_the_template_base_class|Changing the Template Base Class]]
+
+<a id="anchor_introduction"></a>
+
+## Introduction
+
+While [[tutorial/controllers_and_views|Controllers and Views]] provided a quick introduction to Ambition templates. This will go a step further.
+
+The Ambition template language is designed to be simple but expressive by utilizing the knowledge the developer already has, combined with the speed of a compiled, reusable template. The design is inspired by ASP.NET's Razor language, and the Play! Framework's Scala template language, but completely isolated within the Vala language.
+
+By basing the template language on Vala, and compiling it with Vala, the template language does not require the developer to learn an entirely new language, it maintains type safety within the application, and executes at native speed, preventing the parsing bottleneck of traditional template languages.
+
+<a id="anchor_a_simple_example"></a>
+
+## A Simple Example
+
+### src/View/Template/Root/example.vtmpl
+
+
+    @parameters( Account account, ArrayList<Album> albums )
+    <html>
+    <body>
+    <h1>@{account.name}'s Albums</h1>
+    <table>
+        <tr>
+            <th>Album Name</th>
+            <th>Artist</th>
+            <th>Year</th>
+        </tr>
+    @foreach( Album album in albums ) {
+        <tr>
+            <td>@{album.name}</td>
+            <td>@{album.artist}</td>
+            <td>@{album.year}</td>
+        </tr>
+    @}
+    </table>
+
+### in src/Controller/Root.vala
+
+    public Result example( State state ) {
+        Album album = new Search<Album>().eq( "account_id", account.account_id ).list();
+        return View.Template.Root.example( account, album );
+    }
+
+<a id="anchor_template_lifecycle"></a>
+
+## Template Lifecycle
+
+Each .vtmpl file found in `src/View/Template` is checked and compiled when `ambition run` is executed. The file is parsed, an simple error check is performed, and it is translated into a `.vala` class. When `valac` compiles the source files, additional errors may be found -- but the line number from the original `vtmpl` file is included when the compiler reports issues.
+
+A manual compile can be performed with Ambition's `template-compile` command.
+
+<a id="anchor_basic_syntax"></a>
+
+## Basic Syntax
+
+<span style="font-weight: bold">Everything magic involves the `@` character.</span>
+
+Ambition's template system utilizes the `@` character to denote logic or dynamic components within a template.
+
+When the `@` character is found at the beginning of a line, Ambition assumes that Vala logic will be performed after that character. This is used for blocks involving if/else statements, for/foreach loops, or any other type of logic decision.
+
+When the `@` character is found, followed by a one line block within `{` braces `}`, Ambition assumes that the result of what is contained in those braces should be placed in the output. The normal use case for this is to output the contents of a variable, such as `@{album.name}`. Anything that outputs a string can be used, though, so standard Vala string modifiers can be chained together, such as `<span>@{ "%s-%s".printf( album.name.down().substring( 2, 4), album.name.up() ) }</span>`.
+
+<a id="anchor_allowed_keywords"></a>
+
+## Allowed Keywords
+
+`parameters` - Allowed at the beginning of a source file, takes incoming parameters and their types.
+
+    @parameters( string example )
+
+`using` - Import namespaces into the current template, allowed after or instead of `parameters()`.
+
+    @using Gee
+    @using ExampleApp.Model
+
+`process` - Process and include another template, with optional parameters.
+
+    @process( 'Root.sidebar', "example" )
+
+`if`
+
+    @if ( 1 > 0 ) {
+        <p>One is greater than zero.</p>
+    @}
+
+`for`
+
+    @for ( var i = 0; i < 10; i++ ) {
+    @}
+
+`foreach`
+
+    @foreach ( var element in some_array ) {
+        <li>@{element}</li>
+    @}
+
+`else`
+
+    @if ( 1 > 0 ) {
+    @} else {
+        <div>The world is ending.</div>
+    @}
+
+`while`
+
+    @while ( i > 0 ) {
+    @}
+
+`do`
+
+    @do {
+    @} while ( i > 0 )
+
+`switch`, `case`, `default`
+
+    @switch (some_variable) {
+    @    case "foo":
+    @        break;
+    @    default:
+    @        break;
+    @}
+
+`try`, `catch`
+
+    @try {
+    @    some_method();
+    @} catch (Error e) {
+        <div>Oh no.</div>
+    @}
+
+<a id="anchor_adding_comments"></a>
+
+## Adding Comments
+
+Comments can be added to templates that will not be shown after rendering, unlike HTML comments. To add a comment, prefix a line with `@*`.
+
+    @* This is a comment.
+    <span>This is not.</span>
+
+<a id="anchor_accessing_state"></a>
+
+## Accessing State (Request and Response)
+
+The State object for the current request is implicity included in every template. It can be accessed as `state`.
+
+    <div>
+         @{state.request.get_cookie("example").value}
+    </div>
+
+<a id="anchor_accessing_configuration"></a>
+
+## Accessing Configuration
+
+Config values can be accessed through the Ambition namespace (`Ambition.Config.lookup("example")`). To display a value from the config, normal variable interpolation works with functions as well:
+
+    <span>@{Ambition.Config.lookup("app.name")}</span>
+
+<a id="anchor_stashing_data_along_the_way"></a>
+
+## Stashing Data Along the Way
+
+Request's `cache` HashMap is useful for storing data that lasts for one request. It will only store string data, and only for the life of a request, but can be handy for temporarily storing data for use along a chain or between controllers and the final view. To access within the template:
+
+    <span>@{state.request.cache["example_data"]}</span>
+
+<a id="anchor_importing_new_namespaces"></a>
+
+## Importing new namespaces
+
+By setting the `template.using` config setting, additional namespaces can be automatically added to each compiled template. For instance, if Gee will be used often, you can add the following line to your config to be able to use HashMap or ArrayList without `@using Gee` in every template.
+
+    template.using = Gee
+
+<a id="anchor_changing_the_template_base_class"></a>
+
+## Changing the Template Base Class
+
+The easiest way to add a core library of functions to all compiled templates is to create a subclass of `Ambition.CoreView.Template` and add functionality to that class. To force all compiled templates to subclass your new base class, add the following line to your config, replacing the class name with the valid class in your project.
+
+    template.base_class = ExampleApp.View.NewBaseTemplate
+
+</section>
+</div>

@@ -1,0 +1,43 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+{include tutorial/blog/contents}
+# Creating a Simple Blog
+<br />
+
+## Introduction
+
+Sometimes, the easiest way to learn a new framework or technology is to build something simple but usable right off the bad. In this tutorial, to demonstrate creating a new Ambition application from scratch, we're going to build a (simple) blog application. This tutorial will demonstrate how to generate a new application, database access, template creation, and using plugins.
+
+## Before we get started
+
+This tutorial assumes that a working installation of Ambition already exists. If not, please see the [[tutorial/install|Installation Guide]], or visit any of the support options available on this site.
+
+You will also need a working text editor, preferably one with Vala syntax highlighting. You may use vim or emacs on the command line, or if you prefer a GUI, [[https://projects.gnome.org/gedit/|gedit]], [[http://www.geany.org/|Geany]], and [[http://www.sublimetext.com/|Sublime Text]] all have support for Vala.
+
+For the database support, we will be using PostgreSQL for our example. It's possible to use MySQL or SQLite for running these examples, with minor changes, but the tutorial won't get into that. PostgreSQL is open source, free, and fairly easy to install in most operating systems.
+
+## Goals
+
+What do we want this blog to do?
+
+1. Show a list of blog posts, from most recent on
+1. Page through posts by sets of five
+1. Show a list of blog posts by tag, with the existing pagination
+1. Display a single post
+1. Log into an administration page
+1. Post new entries
+1. Edit an existing entry
+1. Edit user information
+
+There are other things that blogs might be able to do, and they may be a good exercise for additional experimentation. Most blogs support comments, so one could use Disqus to add instant comments, or create a commenting system within the application. RSS is an excellent tool, so a way to view those entries via Atom would be a great experiment.
+
+[[tutorial/blog/scaffolding|Go on to Part One - Scaffolding and Setup >>]]
+
+</section>
+</div>

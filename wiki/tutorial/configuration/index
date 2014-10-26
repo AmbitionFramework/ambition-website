@@ -1,0 +1,76 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+# Configuration
+<br />
+
+An application using Ambition supports loadable configuration files, and one was created when `ambition new` was run. If your application's name was `Example`, you can find it in `config/example.conf`.
+
+By default, this is what is provided:
+
+    # The app name can be referenced from within your app
+    app.name = Example
+    
+    # Requests for paths starting with these comma-separated directories will be
+    # found in the static/ directory of this project.
+    static.directories = static
+    
+    # Show log items at or above the value. (debug, info, warn, error)
+    app.log_level = debug
+    
+    # Display the Powered-By HTTP header
+    app.show_powered_by = yes
+
+    # Uncomment to define where to store the log file when your application is
+    # daemonized.
+    # app.log_file = Example.application.log
+    
+    # If using the SCGI engine, you can configure the maximum number of threads or
+    # the port to listen on.
+    scgi.port = 3200
+    scgi.threads = 10
+
+The options provided are all used by Ambition for loading engines, determining how to log, or auto-creating actions to serve static files. Each of them can be looked up, and any new options added to the configuration can also be referenced inside your application. To add or change values, add them as `key = value`. The configuration methods are usable through the `Config` singleton, and by default, all values will be strings.
+
+## Additional configuration options
+
+_`app.keep_files`_ - When accepting uploads from a HTML form, Ambition will create temporary files to store those uploads. Set this to true to keep temporary files after the request is complete.
+
+_`app.engine`_ - Set a default engine type for running your application. The default is 'Raw', but if other engine plugins are installed, like 'SCGI', it can be defined here to provide a new default.
+
+_`session.name`_ - Name the session cookie as sent to the browser
+
+_`session.expires`_ - Time, in seconds, until a session expires. Defaults to ending when the browser closes.
+
+_`template.using`_ - A comma-separated list of namespaces to add as "using" lines within compiled templates.
+
+_`template.base_class`_ - Set a different base class for compiled templates. The base class must be a subclass of `Ambition.CoreView.Template`.
+
+## To look up a configuration value
+    var value = Config.lookup("example.key");
+
+## To look up a configuration value, with a default value if it does not exist
+    var value = Config.lookup_with_default( "is_production", "no" );
+
+## Look up a value as another type
+Methods are available to save a couple of steps when parsing a configuration value. A missing value will still return null, but will otherwise auto-convert values. lookup_bool will convert any capitalization of "true", "1", "t", and "yes" to true, and all other values to false.
+
+    # Config: example.value = 100
+    int value = Config.lookup_int("example.value");
+    # value = 100
+    
+    # Config: example.value = 1000000000
+    int64 value = Config.lookup_int64("example.value");
+    # value = 1000000000
+    
+    # Config: example.bool = true
+    bool value = Config.lookup_bool("example.bool");
+    # value = true;
+
+</section>
+</div>

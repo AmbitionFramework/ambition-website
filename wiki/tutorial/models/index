@@ -1,0 +1,16 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+# Accessing and Storing Data
+<br />
+
+The model layer of the MVC design pattern is represents the data associated with an application, whether from a database, filesystem, or external service. In many cases, a model class is an ad hoc representation of data, but there are plugins and libraries available to create model classes from other types of data.
+
+
+</section>
+</div>

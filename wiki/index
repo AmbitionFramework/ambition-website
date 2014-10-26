@@ -1,0 +1,38 @@
+<span></span>
+<div class="12u-first">
+<!-- Main Content -->
+<section>
+
+# Welcome to the Ambition Framework!
+
+Ambition is a next-generation MVC web application framework, empowering developers to create beautiful and expressive applications in minimal time, and scale them to incredible heights. Written in and targeted at the Vala programming language, find out how to get all the benefits of a static-typed language without the pain or verbosity.
+
+<span style="font-weight: bold">Ambition is still in development, and may not be suited for production.</span>
+
+</section>
+</div>
+</div>
+
+<div class="5grid">
+<div class="4u-first">
+<section>
+# [[Learn]]
+
+Find out more about the Ambition Framework through introductions, tutorials, documentation, and API references.
+</section>
+</div>
+<div class="4u">
+<section>
+# [[Do]]
+
+Dive into web application development with the Ambition Framework. Download binaries or source for many different platforms.
+</section>
+</div>
+<div class="4u">
+<section>
+# [[Join]]
+
+Join a discussion group, chat with us online, or help us help others by joining the development team of the Ambition Framework. 
+</section>
+
+</div>

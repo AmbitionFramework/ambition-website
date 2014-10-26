@@ -1,0 +1,75 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+# Installing on FreeBSD 9
+<br />
+
+This document assumes an installation from git, but can be modified to use source packages downloaded from ambitionframework.org.
+
+
+Install required packages:
+
+    sudo pkg_add -r cmake git automake vala libgee gnome-common libsoup-gnome gtk-doc e2fsprogs-libuuid
+    cd /usr/ports/databases/libgda5
+    sudo make install distclean
+    cd /usr/ports/devel/bazaar
+    sudo make install distclean
+
+Create a work directory:
+
+    mkdir ambition-src
+
+
+Install couchdb-glib from source:
+
+    bzr branch lp:couchdb-glib
+    cd couchdb-glib
+    ./autogen.sh
+    gmake
+    sudo gmake install
+    sudo ln -s /usr/local/lib/pkgconfig/* /usr/local/libdata/pkgconfig
+
+Install libgscgi. Feel free to ignore warnings, but there shouldn't be any errors.
+
+    git clone https://github.com/AmbitionFramework/libgscgi.git
+    cd libgscgi
+    gmake
+    sudo gmake install
+    cd ..
+
+Install Almanna.
+
+    git clone https://github.com/AmbitionFramework/almanna.git
+    cd almanna
+    mkdir build
+    cd build
+    cmake ..
+    gmake
+    sudo gmake install
+    cd ../..
+
+Install Ambition.
+
+    git clone https://github.com/AmbitionFramework/ambition.git
+    cd ambition
+    mkdir build
+    cd build
+    cmake ..
+    gmake
+    sudo gmake install
+    cd ../..
+
+Fix paths:
+
+    sudo ln -s /usr/share/ambition-framework /usr/local/share/
+    sudo ln -s /usr/lib/pkgconfig/* /usr/local/libdata/pkgconfig/
+
+Ambition is ready to use!
+
+</section>
+</div>

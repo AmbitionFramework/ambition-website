@@ -1,0 +1,35 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+# What is the Ambition Framework?
+## and, Why Should I Use Ambition?
+<br />
+
+The Ambition Web Framework is an open-source [[introduction/mvc|MVC web framework]] designed to empower developers to create dynamic, scalable web applications and services using a minimum of resources. Built on top of the [[http://live.gnome.org/Vala|Vala]] programming language, Ambition allows for development on a type-safe and compiled environment, while maintaining rapid prototyping and development common with MVC frameworks.
+
+The advantages of Ambition -- rapid development, easy deployment, and minimal resource utilization -- make it the ideal web framework for cloud deployment.
+
+## The Advantage of Vala: Type Safety and Compiled Execution
+
+When choosing a framework to build your next web application or service, there are plenty of options. Dynamic programming languages like Ruby, Perl, and Python offer easy scaffolding of applications and a quick time-to-market at the cost of resource usage and safe typing. Why is type safety important? When crunching numbers, exchanging data with multiple services, or dealing with user data, using the compiler to ensure a string is a string, and a number a number allows you to focus on implementation, and keeps your data safe. When others browse your code, it's easy to find out what is in your array, or what you're expecting from another service.
+
+Type safe options exist, and are used very often in enterprise application development. Java, Visual Basic .NET, and C# all offer complete type safety and memory management combined with a selection of MVC frameworks. Many of the web frameworks are designed for enterprise applications, requiring the developer to hand scaffold an application, reducing some of the "rapid" in rapid application development. Furthermore, all three of those languages operate inside of a *Virtual Machine*, adding a level of interpretation between your code and the operations handled on the server. This Virtual Machine handles all of the memory management for you, with the downside of requiring a larger pool of memory to work with.
+
+Ambition's use of the Vala programming language provides a type safe language with a similar syntax to C# and Java. Vala compiles down to raw C code, and GCC compiles it into a native executable for your platform. All of the memory management details are handled by Vala, but it does not use a garbage collector, reducing the need for a large pool of memory.
+
+## Easy to Start, Easy to Extend
+
+Ambition comes with tools to create your first simple application, as well as built-in defaults to help access your data layers, render HTML through templates, manage authentication and access, and handle form data. Within a matter of minutes, your application is ready to run on any web server. Ambition does not lock you into those defaults, however. You can plug in new views for XML, JSON, or a custom templating system of your choice. You may swap out the Almanna model layer for another Vala or C ORM, or use a raw database driver. Hooks can be added to any step of an Ambition request to change how your application works.
+
+You are in control of every request that passes through your application.
+
+## Connect to Everything
+
+Ambition, combined with Almanna, provides plugins to immediately connect to major relational database servers like MySQL and PostgreSQL, as well as MongoDB, CouchDB, and Memcached. Furthermore, built in JSON and XML parsing support and Gnome's libsoup HTTP library provides an easy way to connect to web services. A developer is instantly empowered to manipulate and combine data from multiple sources using an easy object oriented interface. While more connectivity options are on their way, leveraging the power of existing C libraries, you can create new models to connect to different data sources that don't yet exist in Ambition.
+</section>
+</div>

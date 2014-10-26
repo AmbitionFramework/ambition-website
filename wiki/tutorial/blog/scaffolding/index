@@ -1,0 +1,141 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+{include tutorial/blog/contents}
+# Part One - Scaffolding and Setup
+<br />
+
+## Creating the Application
+
+The first step in creating a new Ambition application is to allow the ambition command to scaffold something for you. Enter a terminal of some sort, change to a working directory, and create a new application. We'll call this "Parchment", but you could call it anything you want, as long as you're consistent through the rest of the tutorial. The "new" command takes an argument corresponding to the application's name. This should be one word with no spaces, as this will be the namespace for your new application.
+
+    $ ambition new Parchment
+
+A directory called "Parchment" will be created, and you'll want to cd into it. The application directory contains a collection of other files and directories. For this tutorial, you will care about "config", "src", and "static". For the future, you will also care about "test".
+
+*config* contains configuration for your application. You will likely edit _parchment.conf_ and _actions.conf_.
+
+*src* contains all of the source code for your application, and it contains _Controller_ for all of your controllers, or application logic, _Form_ for HTML forms, _Model_ for business logic or database access, and _View_ for templates. This directory contains two source files, but the important one is _Application.vala_, where you can perform additional configuration on your application, or set up hooks for different areas of the app.
+
+*static* contains any static files you'd like to serve. Ambition can serve these itself, or you can set your web server to serve them for you. We will place CSS and JS files in here.
+
+*test* contains unit test classes for the application. These are run when you issue a "test" command.
+
+## Running your Application
+
+Since we have a working application already, make sure the application runs and can be accessed in your browser. Inside the "Parchment" directory, tell Ambition to run a local instance of your application.
+
+    $ ambition run
+
+Ambition will compile the sources of your application, and output some debugging information.
+
+    ( info) Resolving dependencies...
+    ( info) Running cmake...
+    ( info) Building project...
+    ( info) Executing application...
+    ( info) Registered plugin 'Session'.
+    (debug) Actions:
+    (debug)  G    ^\/$                             /root/index
+    (debug)  G    ^\/favicon.ico$                  /static
+    (debug)  G    ^/static                         
+    ( info) Starting Raw engine on port 8099
+
+This output shows that a successful compile occurred, that the built in _Session_ plugin was loaded, and that you have three actions that your application will respond to. The first is an index page that goes to Root.index, and two static actions, one for _favicon.ico_, and one for anything in the _static_ directory. It then shows that it is listening on port 8099.
+
+Go ahead, try it out. Navigate to [[http://localhost:8099]].
+
+For the purposes of this tutorial, you will use _ambition run_ to run the application, and Control-C to exit the application. If running on a Linux machine, the command _ambition monitor_ will automatically re-compile the application when a file is changed.
+
+## Add a Database Plugin
+
+Since a database will be used for this application, the Almanna plugin will be required. Hit Control-C to exit the application, and then execute:
+
+    $ ambition plugin add Almanna
+
+The Almanna plugin will be added to your application.
+
+## Setting up a Database
+
+As mentioned earlier, this tutorial uses PostgreSQL for the database component. Much of this could be converted to other databases, including MySQL or SQLite. Without configuring the application yet, prepare the database for our goals. As this tutorial isn't covering database administration or design, we're going to plug and play this one.
+
+### Create the database
+
+    $ createdb parchment
+
+### Import SQL
+
+Save the following to parchment.sql:
+
+    CREATE TABLE entry (
+        entry_id serial primary key,
+        publisher_id integer not null,
+        date_created timestamp,
+        date_modified timestamp,
+        title varchar(255),
+        content text
+    ) WITH OIDS;
+
+    CREATE INDEX entry_publisher_id ON entry (publisher_id);
+
+    CREATE TABLE entry_tag (
+        entry_id integer not null,
+        tag_id integer not null,
+        PRIMARY KEY (entry_id, tag_id)
+    );
+
+    CREATE TABLE publisher (
+        publisher_id serial primary key,
+        username varchar(64),
+        password_hash char(40),
+        display_name varchar(255),
+        date_created timestamp,
+        date_modified timestamp,
+        date_login timestamp
+    ) WITH OIDS;
+
+    CREATE INDEX publisher_username ON publisher (username);
+
+    CREATE TABLE session (
+        session_id char(40) primary key,
+        session_data text
+    );
+
+    CREATE TABLE tag (
+        tag_id serial primary key,
+        name varchar(64)
+    ) WITH OIDS;
+
+    CREATE INDEX tag_name ON tag (name);
+
+Then run:
+
+    $ psql parchment < parchment.sql
+
+## Set up the application
+
+Now that we have an application and a database, configure Parchment to use the database we just created. Open config/parchment.conf in your text editor. This file contains all of the dynamic configuration for your application, and a few options are configured already. For now, let's add configuration to the end.
+
+The database layer uses a library called Almanna to abstract database calls into something easily called from Vala. This minimizes the amount of SQL that needs to be written, and allows data to be changed as simple objects. This layer can be configured right through this configuration file. Assuming your database is local to your machine, the following snippet can be added to the end of the configuration.
+
+    almanna.provider = PostgreSQL
+    almanna.connection_string = PostgreSQL://HOST=127.0.0.1;DB_NAME=parchment
+    almanna.username = postgres
+    almanna.password = postgres
+
+The *almanna.provider* key contains the database type. In this case, it is PostgreSQL, but this could also be MySQL or SQLite. This will match the beginning of the connection_string.
+
+The *almanna.connection_string* is a connection string that is passed to _libgda_. For PostgreSQL, the only configuration needed is HOST, or the hostname/IP address of the database server, and DB_NAME for the name of the database we are connecting to. Feel free to change those to whatever you may have called your example.
+
+*almanna.username* is your PostgreSQL username to access that database. Many default installations use _postgres_ here, but change to your local username, or whatever may be configured on your system.
+
+*almanna.password* is your PostgreSQL password associated with that username. Blank passwords will work in this case, but it's highly recommended you change that.
+
+[[tutorial/blog/model|Go on to Part Two - Setting up the Model >>]]
+
+</section>
+</div>

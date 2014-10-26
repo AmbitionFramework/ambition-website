@@ -1,0 +1,61 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+# Installing on Fedora 18
+<br />
+
+This document assumes an installation from git, but can be modified to use source packages downloaded from ambitionframework.org.
+
+
+Install required packages:
+
+    sudo yum install gcc gcc-c++ make vala cmake libgee08-devel json-glib-devel readline-devel libsoup-devel libgda-devel libgda-sqlite couchdb-glib-devel git
+
+Create a work directory:
+
+    mkdir ambition-src
+
+
+Install libgscgi. Feel free to ignore warnings, but there shouldn't be any errors.
+
+    git clone https://github.com/AmbitionFramework/libgscgi.git
+    cd libgscgi
+    make
+    sudo make install
+    cd ..
+
+Install Almanna.
+
+    git clone https://github.com/AmbitionFramework/almanna.git
+    cd almanna
+    mkdir build
+    cd build
+    cmake ..
+    make
+    sudo make install
+    sudo ln -s /usr/lib/pkgconfig/almanna-0.1.pc /usr/share/pkgconfig/
+    sudo ln -s /usr/lib/libalmanna-0.1.so /usr/lib64/
+    cd ../..
+
+Install Ambition.
+
+    git clone https://github.com/AmbitionFramework/ambition.git
+    cd ambition
+    mkdir build
+    cd build
+    cmake ..
+    make
+    sudo make install
+    sudo ln -s /usr/lib/pkgconfig/ambition-0.1.pc /usr/share/pkgconfig/
+    sudo ln -s /usr/lib/libambition-0.1.so /usr/lib64/
+    cd ../..
+
+Ambition is ready to use!
+
+</section>
+</div>

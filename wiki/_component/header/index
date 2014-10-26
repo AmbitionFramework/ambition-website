@@ -1,0 +1,26 @@
+<body class="subpage">
+
+<!-- Header -->
+<div id="header-wrapper">
+<header id="header" class="5grid">
+<div class="12u-first">
+
+<!-- Logo -->
+<a href="/"><img src="/static/ambition-banner.png" width="250" height="60" border="0" class="logoimage" />
+
+<!-- Nav -->
+<nav>
+<a href="/wiki/Learn">Learn</a>
+<a href="/wiki/Do">Do</a>
+<a href="/wiki/Join">Join</a>
+<a href="http://blog.ambitionframework.org">Blog</a>
+<a href="http://plugins.ambitionframework.org">Plugin</a>
+</nav>
+
+</div>
+</header>
+</div>
+<!-- Content -->
+<div id="content-wrapper">
+<div id="content">
+<div class="5grid">

@@ -1,0 +1,27 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+{include tutorial/blog/contents}
+# Part Seven - Summary
+<br />
+
+After running through each of these parts, you now have a functional blog application. Entries can be viewed on the front page, all the way back through history, and individual entries can be read and linked. There is an administration area that is password protected for each "publisher", where entries can be created and updated. The application itself is database driven, but we didn't have to write any SQL to complete it.
+
+While the example itself explained how to create a basic application, there are many opportunities to extend this application: 
+
+* The entries have no support for comments, which can be extended through a third party commenting system like Disqus, or comments can be added within the application itself, using another authorizer and a few extra tables.
+* Error handling is very minimal, expecting a happy path of links being followed, but users never do exactly what you want them to.
+* A RSS feed is missing, which is almost a requirement for any site with consistent and continuous updates. This could be a job for a template, or a deep dive into XML processing with Vala.
+* There are no [[tutorial/tests|unit tests]]. While they don't directly affect the operation of your application, they can help catch issues later on as you add new features or fix problems with the application down the road.
+
+This tutorial is available as a completed product within the /examples directory in the Ambition repository. Over time, other features could be explored, and those will be added to the examples directory.
+
+This is a good time to either start experimenting with this application, or start a new Ambition application. Have fun!
+
+</section>
+</div>

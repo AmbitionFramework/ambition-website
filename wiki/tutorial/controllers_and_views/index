@@ -1,0 +1,106 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+# Controllers, Views, and How to Get There
+<br />
+
+The basic building blocks of your application are Models, Views, and Controllers, and how those items fit together is discussed in the [[introduction/mvc|What is MVC?]] node. To start providing functionality in your application, you will need to start with a controller, and display something to the user with some sort of view. We can add a model afterward.
+
+## Controllers
+
+A controller in Ambition is the start of logic for a web endpoint, and multiple controllers are there to separate logical domains in your application. In a new scaffolded application, only one controller with one endpoint is provided, as only one page is available in the scaffolded application. In real life, multiple controllers with multiple methods would be in use.
+
+Each controller in Ambition exists as a simple object, with each method corresponding to one or more actions. A method used as an endpoint returns an object that subclasses [[http://www.ambitionframework.org/static/valadoc/ambition/Ambition.Result.html|Result]], such as a template instance or a [[http://www.ambitionframework.org/static/valadoc/ambition/Ambition.CoreView.html|CoreView]], to determine how to render the result of the method.  To help explain, we'll use the scaffolded application.
+<pre><code class="vala">
+using Ambition;
+using ExampleApp.View;
+namespace ExampleApp.Controller {
+    public class Root : Object {
+        public Result index( State state ) {
+            return Template.Root.index( "ExampleApp", state.request.headers );
+        }
+    }
+}
+</code></pre>
+
+This example creates a controller called 'Root', and defines a method called 'index', following the definition above. It will render a template in the Root namespace called "index", and pass it the string "ExampleApp", and the HashMap headers in the Request object.
+
+## Views and Templates
+
+Every controller method returns a Result or null to tell the dispatcher how to move on from that method. Any subclass of Result knows how to render a view to a client or tell the dispatcher how to stop or change direction. A few types of Results are built in:
+
+* [[http://www.ambitionframework.org/static/valadoc/ambition/Ambition.CoreView.None.html|None]] - Does not return any view, which is useful in a multi-target action.
+* [[http://www.ambitionframework.org/static/valadoc/ambition/Ambition.CoreView.JSON.html|JSON]] - Returns a JSON document to the client, based on a string or a json-glib object.
+* [[http://www.ambitionframework.org/static/valadoc/ambition/Ambition.CoreView.Redirect.html|Redirect]] - Issues a redirect response to the client.
+* [[http://www.ambitionframework.org/static/valadoc/ambition/Ambition.CoreView.Template.html|Template]] - Renders an Ambition Template to the client.
+
+The Template result is actually a base class that is subclassed in each generated template. The templates written by the developer are based on a very simple, minimized Vala-ish syntax, and stored in folders underneath `src/View/Template`. When an Ambition application is run, all of those templates are parsed into Vala classes and compiled with your application for fast execution.
+
+The Result above is a Template, and the template itself can be found by looking at the namespace of the template. The Template namespace referenced is in ExampleApp.View, so this template exists in `src/View/Template/Root/index.vtmpl`. A simplified view of the example template is below, this only subtracts some static data and inline styles.
+
+    @parameters( string application_name, HashMap<string,string> headers )
+    @using Gee
+    <html>
+    <head>
+    	<title>@{application_name} Test</title>
+    </head>
+    <body>
+    	<div class="box">
+    		<h1>Welcome to @{application_name}</h1>
+    	</div>
+    	<div class="box">
+    		<div id="param_box">
+    			<table>
+    				<tr>
+    					<th>Header</th>
+    					<th>Value</th>
+    				</tr>
+    @foreach( string header in headers.keys ) {
+    				<tr>
+    					<td>@{header}</td>
+    					<td>@{headers.get(header)}</td>
+    				</tr>
+    @}
+    			</table>
+    		</div>
+    	</div>
+    	<div id="footer">
+    		rendered in @{"%0.4f".printf( state.elapsed_ms() )} ms with Ambition.
+    	</div>
+    </body>
+    </html>
+
+The `vtmpl` file looks a lot like an HTML file with a few minor additions. The file can be edited by most text editors with HTML syntax highlighting, and still be quite useful. Any non-HTML command is prefaced by the `@` symbol. When braces are added, like `@{foo}`, Ambition will do a simple string replacement of whatever is in the variable `foo`. If `foo` doesn't exist, an error will be thrown. Simple Vala logic, like `if`, `else`, `for`, and `foreach` is available if they are used on lines of their own. There are two commands that are not based on Vala commands. One is listed in this template - `parameters`. Think of `parameters` like a method signature in Vala. This tells Ambition what can be passed into the template for use by the template. Back in the controller's return statement, a string and a HashMap were passed in, and note that `parameters` accepts a string and a HashMap for use. The second non-Vala command is `process`, and we'll get into that in [[tutorial/templates|Templates]].
+
+## Actions
+
+Now that a controller and view are available, Ambition needs to know how to get from a web request to that code. That's where Ambition's actions come in. The standard and recommended method for setting up your actions is editing `config/actions.conf`.
+
+    # Path/Regex					Methods		Target Chain
+    /								GET			Root.index
+
+The syntax of this file is very basic, but allows for complex operations. Comments start with the `#` character, but all other lines will be parsed. Each line contains three components, a Path or Regex, a list of Methods, and a Target Chain.
+
+### Path/Regex
+This section determines how to match a path to your action. The line in the example is simply `/`, so it's the root path. If you wanted to match `http://www.yourdomain.com/foo/login`, this would be `/foo/login`. Simple captures are supported by surrounding a variable name with brackets. For example, `/post/[post_id]` would match /post/ and another component on the end, and stored in the request. This value could be accessed with `state.request.get_capture("post_id")`. Longer path captures can be captured with `*`. For example, `/post/*` would match /post/foo/bar, and those additional arguments would be found in the array `state.request.arguments`.
+
+If there was a `/` at the beginning and a `/` at the end, Ambition would assume it was a regular expression, and parse it accordingly. Any valid GLib.Regex expression is supported, including captures, but the first one to match will be used, so regular expressions should be as focused as possible.
+
+### Methods
+The methods are a list of valid HTTP methods for this request. Many applications allow any method for any request, but RESTful services and security certifications commonly require different actions for different types of requests. The methods for a given action can be listed, comma-separated, and for as many methods as needed by a request. The valid methods are listed in the [[http://www.ambitionframework.org/static/valadoc/ambition/Ambition.HttpMethod.html|HttpMethod]] class, with the addition of `ALL`, for accepting all methods.
+
+For example, to allow GET, POST, and HEAD requests, the value here would be `GET,POST,HEAD`.
+
+### Target Chain
+The target chain is one or more methods to respond to this request. In the example above, the `index` method of `Root` is called, making the Controller namespace implicit.
+
+The "chain" part is that multiple methods can be called in an action. This is helpful if one wants to check authentication before another method is called, or to prepare components before hitting logic specific for that action. Multiple actions can be separated by commas.
+
+For example, `Root.begin, Root.index`.
+</section>
+</div>

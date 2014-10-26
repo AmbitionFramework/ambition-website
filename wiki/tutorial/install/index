@@ -1,0 +1,57 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+# Installing the Ambition Web Framework
+<br />
+
+
+## Installing on Specific Operating Systems
+
+* [[tutorial/install/ubuntu1304|Ubuntu 13.04-14.10]]
+* [[tutorial/install/ubuntu1210|Ubuntu 12.10]]
+* [[tutorial/install/fedora18|Fedora 18]]
+* [[tutorial/install/freebsd9|FreeBSD 9-10]]
+* [[tutorial/install/osx107|Mac OS X 10.7-10.10 (with MacPorts)]]
+
+
+## What you'll need
+Ambition is written in and for the Vala programming language, so you will need a computer capable of compiling Vala applications. Ambition has been successfully installed on Linux, FreeBSD, Solaris, and Mac OS X. A Windows installer and toolset is on the roadmap, but has successfully been compiled and used under Cygwin. The full requirements are as follows:
+
+* A UNIX-like operating system and shell (Linux, FreeBSD, Solaris, Mac OS X)
+* GCC 4.2 or higher
+* Vala/valac 0.16 or higher
+* CMake 2.8 or higher
+* glib-2.0
+* libgee-0.8
+* libgio-2.0
+* libjson-glib-1.0
+* libreadline
+* libsoup-1.0
+
+## Installing a release version from source
+
+Release versions of Ambition are installed similarly to other open source projects utilizing CMake. Download the latest release from our downloads page, and extract to a temporary directory of your choice.
+
+* Change to the extracted directory.
+* Now, execute "`make`" to build Ambition.
+* Execute "`make test`" to verify Ambition built correctly on your system.
+* Execute "`make install`" under sudo or as a root user to install the Ambition libraries on your machine.
+
+## Installing from git
+
+Installing from the git repository is very similar to installing a release version from source. Keep in mind that the master branch may not be fully tested at all times, so it isn't recommended to run in a production environment.
+
+* Clone the master repository to your machine.
+* Make a directory called "`build`", and change to that directory.
+* Execute "`cmake ..`" to generate makefiles with default options.
+* Now, execute "`make`" to build Ambition.
+* Execute "`make check`" to verify Ambition built correctly on your system.
+* Execute "`make install`" under sudo or as a root user to install the Ambition libraries on your machine.
+
+</section>
+</div>

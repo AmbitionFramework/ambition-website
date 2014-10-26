@@ -1,0 +1,319 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+{include tutorial/blog/contents}
+# Part Three - Show Some Entries
+<br />
+
+In Part Two, we hooked up our database to the application, so we can now concentrate on taking data and presenting it in a useful way.
+
+### Give us something to look at
+
+Since we don't yet have a way to create entries, let's add some dummy data to know what we're looking at. For this purpose, we'll add a new "publisher", which is a user account and a display name for the blog, and one "entry", which is a blog post. Save the following to "data.sql", and import it into PostgreSQL.
+
+    -- This creates a username of "example" with a password of "example".
+    INSERT INTO publisher
+     ( username, password_hash, display_name, date_created, date_modified )
+    VALUES 
+     (
+     	'example',
+     	'c3499c2729730a7f807efb8676a92dcb6f8a3f8f',
+     	'Example User',
+     	now(),
+     	now()
+     )
+    ;
+    
+    INSERT INTO entry
+     ( publisher_id, date_created, date_modified, title, content )
+    VALUES
+     (
+     	1,
+     	now(),
+     	now(),
+     	'Example Entry',
+     	'This is a test entry, it is wonderful.'
+     )
+    ;
+
+### Set up our Controller
+
+In Ambition, each endpoint, or URL, is an "action". An action takes an HTTP request, which is a keyword and a URL, and sends it through one or more methods in a controller. Our first step, then, is creating a Controller and a method in that class, corresponding to our root URL. While files can be created at will and added to the CMakeLists.txt file to be compiled, the ambition shell provides a simple way to create new components. Let's create our "Entries" controller, for showing lists of posts.
+
+    $ ambition controller Entries
+    ( info) Created 'src/Controller/Entries.vala'.
+
+Now, open the new file in a text editor. A simple controller has been generated automatically. This shows the new Entries class name, and one default method to respond to a request. We'll extend this to do what we want to do.
+
+    using Ambition;
+    using Parchment.View;
+    namespace Parchment.Controller {
+    
+    	/**
+    	 * Entries Controller.
+    	 */
+    	public class Entries : Object {
+    
+    		/**
+    		 * Index page for Entries.
+    		 * @param state State object.
+    		 */
+    		public Result index( State state ) {
+    			return new Template.Root.index( "Parchment", state.request.headers );
+    		}
+    
+    	}
+    }
+
+An action method follows the same structure each time. It can be called anything, corresponding to the rules of the language. It receives one parameter, a [[/static/valadoc/ambition/Ambition.State.html|State]] object, and returns a class that implements a [[/static/valadoc/ambition/Ambition.Result.html|Result]] object. The templates we create are also objects that implement the Result object, so the example in this class returns an instance of a template.
+
+We'll use the example method to create our entry list method. The first step will be showing a new template that looks like our blog, without actually feeding it any data yet.
+
+1. This method will list entries from the database to our browser, so a method named "index" isn't very descriptive. Change the method name from "index" to "list". 
+1. Documentation is also important, so describe what this method will do. Change the valadoc to match, changing "Index" to "List entries".
+1. Since the database will be used, import the database namespace to reduce typing later. After the "using Parchment.View;" line, add "using Parchment.Model.DB.Implementation;".
+1. The database will return an ArrayList of entities, so Gee is required as well. After the last using line, add "using Gee;".
+1. The view will need an ArrayList of Entry objects, once we make that database call. Insert a line before the return statement to create a new ArrayList of Entry.
+1. A new template will be used instead of Root.index. Change the class to be "Template.Entries.list". This will call the compiled version of the template located in src/View/Template/Entries/list.vtmpl.
+1. The template will need that ArrayList of Entry objects, so pass it as the single argument to the new template.
+
+The class should now look a little something like this:
+
+    using Ambition;
+    using Parchment.View;
+    using Parchment.Model.DB.Implementation;
+    using Gee;
+    namespace Parchment.Controller {
+    
+        /**
+         * Entries Controller.
+         */
+        public class Entries : Object {
+    
+            /**
+             * List entries page for Entries.
+             * @param state State object.
+             */
+            public Result list( State state ) {
+                var entries = new ArrayList<Entry>();
+                return new Template.Entries.list(entries);
+            }
+    
+        }
+    }
+
+### Set up our templates
+
+The controller is now calling a template that doesn't exist, so a new template matching our call needs to be made. Before that template is created, it might be easier to create a header and footer template that can be reused in all of the templates you create. For this demo, and because some of us aren't great designers, let's utilize Twitter Bootstrap.
+
+There isn't a strict naming guideline for templates we include, but since these are pages that wrap our other pages, we'll use "Wrapper". First, create a directory to store the wrapper templates.
+
+    $ mkdir src/View/Template/Wrapper
+
+Next, add a boilerplate header and footer. As the names imply, the header will be rendered before the content in a given template, the footer will be rendered after. First, create a file at `src/View/Template/Wrapper/header.vtmpl`:
+
+    @parameters( string? title = null )
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <title>@{( title == null ? Ambition.Config.lookup_with_default( "blog_name", "Parchment" ) : title )}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet">
+    
+        <style>
+          body {
+            padding-top: 60px;
+          }
+        </style>
+      </head>
+    
+      <body>
+    
+        <div class="navbar navbar-inverse navbar-fixed-top">
+          <div class="navbar-inner">
+            <div class="container">
+              <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="brand" href="/">@{ Ambition.Config.lookup_with_default( "blog_name", "Parchment" ) }</a>
+              <div class="nav-collapse collapse">
+                <ul class="nav">
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+    
+        <div class="container">
+
+Templates have a number of features and guidelines that are explained at length in the [[tutorial/templates|Ambition Templates]] document, but, there are a few items to note in here. A template looks a lot like an HTML page with the occasional `@` sign. The `@` sign tells the Ambition template system that a variable or a piece of logic is being used. Variable interpolation can happen anywhere in a line, provided the variable is surrounded by braces, while control statements, like if, for, and while, have to occur on their own lines. There are no control statements in this template, but there are a few places where strings are inserted. Near the top, where the HTML title should be rendered, we're asking Ambition to check if title is null or empty, and if not, render the variable called title, otherwise, render "Parchment". Later on, we're asking for a key called "blog_title" out of our configuration file, which we haven't configured yet. If it is unavailable, as it would be now, it outputs "Parchment" again. Note that this logic looks a lot like Vala -- it is. This is a restricted form of the Vala code you're already writing, designed specifically for templating, and compiles directly to a class for fast execution. Lastly, the first line of the template contains a `@parameters` statement. This is one of the special keywords in Ambition templates, and it is very similar to creating a new method in your Vala code. This takes a list of variables that the template is expecting, and should then match the `new` statement used when calling the template from your controller or other templates.
+
+Next, let's create `src/View/Template/Wrapper/footer.vtmpl`. This will be much more simple.
+
+        </div>
+        <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
+      </body>
+    </html>
+
+Finally, create the template you called in your controller. Since this was called as `Template.Entries.list`, we have to create `src/View/Template/Entries/list.vtmpl`. For the sake of this demo, the design will be very simple, but use that as an opportunity to extend and enhance the blog. 
+
+Since we are passing the template an ArrayList of Entry objects, the template needs to be able to accept that variable using `@parameters`.
+
+
+    @parameters( ArrayList<Entry> entries )
+
+
+Non-standard Vala datatypes are used, so `Gee` and our database need to be included with `@using`.
+
+
+    @using Gee
+    @using Parchment.Model.DB.Implementation
+
+
+We already have a header and footer created, so, `@process` both of those.
+
+
+    @process( "Wrapper.header", "Entries" );
+    ...
+    @process("Wrapper.footer");
+
+
+Iterate through our `entries` variable to be able to output entries.
+
+
+    @foreach( var entry in entries ) {
+        ...
+    @}
+
+
+Use the `Entry` object to output the actual entry within the iterator.
+ 
+
+    <h3><a href="/entries/@{entry.entry_id.to_string()}">@{entry.title}</a></h3>
+    <blockquote>
+        @{entry.content.replace( "\n", "<br>" )}
+        <small>
+            @{entry.publisher.display_name},
+            @{entry.date_created.format("%Y-%m-%d at %H:%M:%S")}
+        </small>
+    </blockquote>
+    <br>
+    <hr>
+
+
+Your view should look a little something like this:
+
+
+    @parameters( ArrayList<Entry> entries )
+    @using Gee
+    @using Parchment.Model.DB.Implementation
+    @process("Wrapper.header", "Entries")
+    @foreach( var entry in entries ) {
+        <h3><a href="/entries/@{entry.entry_id.to_string()}">@{entry.title}</a></h3>
+        <blockquote>
+            @{entry.content.replace( "\n", "<br>" )}
+            <small>
+                @{entry.publisher.display_name},
+                @{entry.date_created.format("%Y-%m-%d at %H:%M:%S")}
+            </small>
+        </blockquote>
+        <br>
+        <hr>
+    @}
+    @process("Wrapper.footer")
+
+### Create an action for this Controller
+
+The controller and view are created and ready to use. While there's no data yet, it'd be nice to see the page get rendered, and make sure everything compiles properly. The last step before that can happen is to tell Ambition how to get from a URL to your controller. This is all handled in `config/actions.conf`. Currently, the file contains a bit of documentation, and the following line:
+
+    /                                 GET      Root.index
+
+The leftmost column is either a path or a regular expression. In this case, it's a path, for the root URL. The middle column is one or more HTTP request methods, but this action only responds to a GET request. The right column is one or more controller methods that should respond to the request, in this case, the `index` method of the controller called `Root`. Let's change `Root.index` to `Entries.list`, and save the file.
+
+At this point, calling `ambition run` from the terminal should execute the application. Try running it, and reloading the page in your web browser. You should see a very basic Twitter Bootstrap page, and we're ready to connect the whole thing together.
+
+### Connect Model to the View via the Controller
+
+Now that everything is set up, it's easy to get data from our model to our controller. Earlier, an ArrayList of Entry object was created in our Entries controller. Head back to that file, and find where that object is created.
+
+    var entries = new ArrayList<Entry>();
+
+Let's replace this with a simple search query on our Entry table.
+
+    var entries = new Almanna.Search<Entry>()               // Create a Search
+                          .order_by( "date_created", true ) // Order by, descending
+                          .relationship("publisher")        // Use publisher relationship
+                          .list();                          // Retrieve as an ArrayList
+
+Any number of parameters can be chained together, as long as the last item is `list()` or `single()`.
+
+Run your application again, and reload your page. You should see your example entry.
+
+### Split out some new functionality
+
+Most blogs allow a link to see one entry by itself. We're most of the way there, so let's add that quickly.
+
+In the spirit of not repeating ourselves, let's split the content that renders an entry into its own template. Open `src/View/Template/Entries/list.vtmpl`, and cut out the portion between the `foreach` loop. Create `src/View/Template/Entries/entry.vtmpl`, paste it in, and add a `@parameters` line to take an Entry.
+It should look something like this:
+
+    @parameters( Entry entry )
+    @using Parchment.Model.DB.Implementation
+        <h3><a href="/entries/@{entry.entry_id.to_string()}">@{entry.title}</a></h3>
+        <blockquote>
+            @{entry.content.replace( "\n", "<br>" )}
+            <small>
+                @{entry.publisher.display_name},
+                @{entry.date_created.format("%Y-%m-%d at %H:%M:%S")}
+            </small>
+        </blockquote>
+        <br>
+        <hr>
+
+Go back to list.tmpl, and add a `@process` line in the `foreach` loop. Maybe a little something like this:
+
+    @foreach( var entry in entries ) {
+    @process( "Entries.entry", entry )
+    @}
+
+Now that the entry rendering is separated out, creating a blog view page is super easy. Create `src/View/Template/Entries/view.vtmpl`, render the header and footer, and the entry in between.
+
+    @parameters( Entry entry )
+    @using Parchment.Model.DB.Implementation
+    @process( "Wrapper.header", entry.title )
+    @process( "Entries.entry", entry )
+    @process("Wrapper.footer")
+
+A new Controller method is required in `Entries.vala` This should be able to get an entry ID and render the entry. Over in `entry.vtmpl`, there's a link going to `/entries/entry_id`, so we are already getting an entry ID. Create a new method called `view` that grabs a capture from the URL, looks up the entry, and renders it. You may want to think about error handling.
+
+    /**
+     * List entries page for Entries.
+     * @param state State object.
+     */
+    public Result view( State state ) {
+        var entry = new Almanna.Search<Entry>()
+                        .eq( "entry_id", int.parse( state.request.get_capture("entry_id") ) )
+                        .relationship("publisher")
+                        .single();
+        return new Template.Entries.view(entry);
+    }
+
+Finally, add a new action to send `/entries/entry_id` to that controller method. For this example, we'll use a path with a "named capture" to grab an entry_id, by putting the ID in brackets. In `actions.conf`, add this line:
+
+    /entries/[entry_id]               GET      Entries.view
+
+Reload your application, and click the link in the title of the entry, and that entry should appear on its own.
+
+[[tutorial/blog/create|Go on to Part Four - Create Some Entries >>]]
+
+</section>
+</div>

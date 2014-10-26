@@ -1,0 +1,59 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+# Testing Your Application
+<br />
+Every great application is supported by a suite of unit tests. While unit testing support in Vala is slightly weaker than other languages, Ambition provides some help to successfully test a web application. The unit test infrastructure relies on GLib's built in capabilities.
+
+
+## The test directory
+
+Unit tests are located in the "`test`" directory of the generated application. A very simple test is included by default, in `ApplicationTest.vala`.
+
+    public class ApplicationTest {
+    	public static void add_tests() {
+    		Test.add_func("/application/init", () => {
+    			var application = new Example.Application();
+    			assert( application != null );
+    		});
+    	}
+    }
+
+The provided test will always pass by default provided the application compiles. To create this test, a non-namespaced class is created with a static method called `add_tests()`. `add_tests` can set up any global or local variables, and then should present a list of calls to `Test.add_func( string test_name, test_func() )`. The `test_name` can be any value, but the common naming methodology looks like a path with a hierarchy of functionality. So, when testing a controller, a good name may be `/application/controller/root`. The anonymous method has no parameters, but contains the logic of the test case, which has access to any global static variables outside of that function.
+
+To add a new test class, create the new test class, add it to the list of files under `vala_precompile` in `test/CMakeLists.txt`, and then add the `add_tests()` call to `InitializeTests.vala` after the existing entry. You may add as many test classes and functions in those classes as you'd like.
+
+
+## Testing outside of the web framework
+
+In the Ambition web application, utility classes, models, and other functionality can be tested using the existing GLib testing capabilities. No additional support is needed to run this as a part of your existing test suite.
+
+
+## Testing requests and responses
+
+Ambition provides the `[[/static/valadoc/ambition/Ambition.Testing.Helper.html|Ambition.Testing.Helper]]` class to easily test requests and responses in a web application. `Helper` provides `mock_dispatch` to create a simple request, and `mock_dispatch_with_request` to take a manually created Request object and run it through the dispatcher. Those two methods will return a `[[/static/valadoc/ambition/Ambition.Testing.TestResponse.html|Ambition.Testing.TestResponse]]` object to run assertions against.
+
+Available assertions are in the `TestResponse` class documentation.
+
+Example:
+
+    using Ambition;
+    using Ambition.Testing;
+    public class ControllerRootTest {
+	public static void add_tests() {
+    		Test.add_func("/application/controller/root/index", () => {
+    			var result = Helper.mock_dispatch( new Example.Application(), HttpMethod.GET, "/" );
+    			result.assert_status_is(200);
+    			result.assert_content_type_is("text/html");
+    			result.assert_content_like("Example");
+    		});
+    	}
+    }
+
+</section>
+</div>

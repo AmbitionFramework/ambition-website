@@ -1,0 +1,75 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+# Installing on Ubuntu 13.04
+<br />
+
+This document assumes an installation from git, but can be modified to use source packages downloaded from ambitionframework.org.
+
+
+Install required packages:
+
+    sudo apt-get install build-essential cmake libglib2.0-dev libgee-0.8-dev \
+    libjson-glib-dev libreadline-dev libsoup2.4-dev libgda-5.0-dev \
+    git valac-0.18 
+
+
+
+Create a work directory:
+
+    mkdir ambition-src
+
+
+Install couchdb-glib from a previous Ubuntu release. For i386:
+
+    wget http://mirrors.us.kernel.org/ubuntu//pool/universe/c/couchdb-glib/libcouchdb-glib-1.0-2_0.7.4-0ubuntu3_i386.deb
+    wget http://mirrors.us.kernel.org/ubuntu//pool/universe/c/couchdb-glib/libcouchdb-glib-dev_0.7.4-0ubuntu3_i386.deb
+    sudo dpkg -i libcouchdb-glib-1.0-2_0.7.4-0ubuntu3_i386.deb
+    sudo dpkg -i libcouchdb-glib-dev_0.7.4-0ubuntu3_i386.deb
+
+For amd64:
+
+    wget http://mirrors.us.kernel.org/ubuntu//pool/universe/c/couchdb-glib/libcouchdb-glib-1.0-2_0.7.4-0ubuntu3_amd64.deb
+    wget http://mirrors.us.kernel.org/ubuntu//pool/universe/c/couchdb-glib/libcouchdb-glib-dev_0.7.4-0ubuntu3_amd64.deb
+    sudo dpkg -i libcouchdb-glib-1.0-2_0.7.4-0ubuntu3_amd64.deb
+    sudo dpkg -i libcouchdb-glib-dev_0.7.4-0ubuntu3_amd64.deb
+
+Install libgscgi. Feel free to ignore warnings, but there shouldn't be any errors.
+
+    git clone https://github.com/AmbitionFramework/libgscgi.git
+    cd libgscgi
+    make
+    sudo make install
+    cd ..
+
+Install Almanna.
+
+    git clone https://github.com/AmbitionFramework/almanna.git
+    cd almanna
+    mkdir build
+    cd build
+    cmake ..
+    make
+    sudo make install
+    cd ../..
+
+Install Ambition.
+
+    git clone https://github.com/AmbitionFramework/ambition.git
+    cd ambition
+    mkdir build
+    cd build
+    cmake ..
+    make
+    sudo make install
+    cd ../..
+
+Ambition is ready to use!
+
+</section>
+</div>

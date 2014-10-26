@@ -1,0 +1,225 @@
+<span></span>
+<div class="3u-first">
+<section>
+{include Learn/content}
+</section>
+</div>
+<div class="9u">
+<section>
+{include tutorial/blog/contents}
+# Part Six - Edits and Tweaks
+<br />
+
+In Part Five, we added user authentication, and we were able to change our own user. Now we go back and add the nice to have features -- editing entries and pagination.
+
+### Edit an Existing Entry
+
+To edit an existing entry, we'll need to add two bits of functionality -- a way to list entries, and a way to make text edits to the entry. Luckily, we're halfway there. Our create view looks a lot like an edit, so we can reuse it. Let's concentrate on the "hard" part, then, and list our recent entries. Open `src/Controller/Admin.vala` and create a new method called `dashboard`.
+
+Inside the `dashboard` action, you're going to get a list of Entry entities, similar to what was created for the Entry controller. In this case, you want to limit it to a `publisher_id` that is equal to `state.user.id`, or the logged in user. You also want to limit it to the last 15 entries. Once you have your list of entries, you want to pass it to a new view, called `Template.Admin.dashboard`. It should look something like this:
+
+    public Result dashboard( State state ) {
+    	var entries = new Almanna.Search<Implementation.Entry>()
+    					.eq( "publisher_id", state.user.id )
+    					.order_by( "date_created", true )
+    					.rows(15)
+    					.page(1)
+    					.list();
+    	return new Template.Admin.dashboard(entries);
+    }
+
+We have to create the referenced view, so create `src/View/Template/Admin/dashboard.vtmpl`. Inside, we need to capture the `ArrayList<Entry>` being passed in from the controller, and we'll add a table with some basic columns to help us identify an entry to edit. For this example, we'll use "Entry Title", "Date Created", "Date Modified", and "Size". No publisher name, since we're already filtering by the logged in user. We then want to display a "No entries" status if there aren't any entries in the result, otherwise, iterate through the entries and display each row. The entry title should link to `/admin/entry?id=entry_id`, where entry_id is the id for that Entry object. For hints on how to display a date, go back to when we were showing entries to the user in part three. Finally, at the top, let's add a button called "Create New Entry" to go to the entry creator, since we're replacing the default view. The final result should look close to this:
+
+    @parameters( ArrayList<Implementation.Entry> entries )
+    @using Parchment.Model.DB
+    @using Gee
+    @process( "Wrapper.header", "Blog Dashboard" )
+    <div>
+    	<a href="/admin/entry" class="btn btn-inverse">Create New Entry</a>
+    </div>
+    
+    <div>
+    	<table class="table table-striped">
+    		<thead>
+    			<tr>
+    				<th>Entry Title</th>
+    				<th>Created</th>
+    				<th>Modified</th>
+    				<th>Size</th>
+    			</tr>
+    		</thead>
+    		<tbody>
+    @if ( entries.size == 0 ) {
+    			<tr>
+    				<td colspan="4">No entries.</td>
+    			</tr>
+    @} else {
+    @foreach ( var entry in entries ) {
+    			<tr>
+    				<td><a href="/admin/entry?id=@{entry.entry_id.to_string()}">@{entry.title}</a></td>
+    				<td>@{entry.date_created.format("%Y-%m-%d at %H:%M:%S")}</td>
+    				<td>@{entry.date_modified.format("%Y-%m-%d at %H:%M:%S")}</td>
+    				<td>@{"%0.1f".printf( ( (double) entry.content.length ) / 1024 + 0.09 )}k</td>
+    			</tr>	
+    @}
+    @}
+    		</tbody>
+    	</table>
+    </div>
+    @process("Wrapper.footer")
+
+Before we can view our results, we need to add a route to get here. In `config/actions.conf`, replace the action path for `/admin` and send it to `Admin.dashboard` instead of `Admin.entry`.
+
+    /admin                            GET,POST Admin.check_user, Admin.dashboard
+
+Restart the application, navigate to [[http://localhost:8091/admin]], log in if required, and check out your list of entries. Clicking one of those entry links will take you to an empty entry edit page, though, which isn't too useful. So, let's promote our entry create page to something that can be used for both create and edit. Open `src/Controller/Admin.vala` again, and head to our `entry` definition.
+
+In our view, we're sending a query parameter of `id`, containing the id of the Entry we want to edit. At the beginning of our definition, we're creating a new Form.Entry() object. Since we use that form to render, we can check for the existence of an id, and if it's there, load the associated Entry and bind the data to that form. After creating the Form object:
+
+    // Bind from Entry object, if it exists
+    string entry_id = state.request.params["id"];
+    if ( entry_id != null ) {
+    	var entry = new Almanna.Search<Implementation.Entry>().lookup( int.parse(entry_id) );
+    	entry.bind_data_to(form);
+    }
+
+At this point, we'll be able to see entries, but not save changes to them. Let's fix that by using the incoming parameter to detect those changes. After checking for a POST, we're creating a new Entry entity.
+
+    var entry = new Implementation.Entry();
+
+Instead of assuming we're creating a new one, let's change that to an empty variable declaration, and then if an id is passed, load the existing entity, otherwise, create a new one.
+
+    Implementation.Entry entry;
+    if ( form.entry_id > 0 ) {
+    	int entry_id = int.parse( state.request.params["entry_id"] );
+    	entry = new Almanna.Search<Implementation.Entry>().lookup(entry_id);
+    } else {
+    	entry = new Implementation.Entry();
+    }
+
+Now the form will almost save new changes to the existing entity, if one exists. For the sake of completeness, let's have all saves redirect back to the dashboard, and have the dashboard show the success method. Trade out the try block that saves an entity for one that does the same thing, but then redirects with a message in the session.
+
+    try {
+    	entry.save();
+    } catch (Almanna.EntityError e) {
+    	form.add_form_error("Unable to save entry.");
+    }
+    if ( entry.entry_id > 0 ) {
+    	state.session.set_value( "entry_id", entry.entry_id.to_string() );
+    	return new CoreView.Redirect("/admin");
+    }
+
+The entry method should look like this:
+
+    var form = new Form.Entry();
+    
+    // Bind from Entry object, if it exists
+    string entry_id = state.request.params["id"];
+    if ( entry_id != null ) {
+    	var entry = new Almanna.Search<Implementation.Entry>().lookup( int.parse(entry_id) );
+    	entry.bind_data_to(form);
+    }
+    
+    if ( state.request.method == HttpMethod.POST ) {
+    	form.bind_state( state );
+    	if ( form.is_valid() ) {
+    		Implementation.Entry entry;
+    		if ( state.request.params["entry_id"] ) {
+    			int existing_id = int.parse( state.request.params["entry_id"] );
+    			entry = new Almanna.Search<Implementation.Entry>().lookup(existing_id);
+    		} else {
+    			entry = new Implementation.Entry();
+    		}
+    		entry.bind_data_from( form, true );
+    		entry.publisher_id = state.user.id;
+    		try {
+    			entry.save();
+    		} catch (Almanna.EntityError e) {
+    			form.add_form_error("Unable to save entry.");
+    		}
+    		if ( entry.entry_id > 0 ) {
+    			state.session.set_value( "entry_id", entry.entry_id.to_string() );
+    			return new CoreView.Redirect("/admin");
+    		}
+    	}
+    }
+    return new Template.Admin.entry(form);
+
+Then, let's make some final changes to `src/View/Template/Admin/entry.vtmpl`. First, let's show _Create_ or _Edit_ in the title based on whether the id exists. Change the `@process` directive to show _Edit_ if id was passed.
+
+    @process( "Wrapper.header", ( state.request.params["id"] != null ? "Edit" : "Create" ) + " an Entry" )
+
+Next, remove the lines that show whether an entry saved successfully or not. It may be handy to copy that text first, we'll need it again in a second.
+
+Finally, add our entry_id input as a hidden field under the `<form>` tag, and only render it if there's an id.
+    
+    @if( state.request.params["id"] != null ) {
+    <input name="entry_id" type="hidden" value="@{state.request.params["id"]}">
+    @}
+
+Now, let's move that successful save message to the dashboard. Open `src/View/Template/Admin/dashboard.vtmpl`, and paste those lines under your _Create New Entry_ button.
+
+    @if( state.session.has_value("entry_id") ) {
+    	<div class="text-success">
+    		Entry saved successfully!
+    		<a href="/entries/@{state.session.delete_value("entry_id")}">View it now</a>.
+    	</div>
+    @}
+
+Your entry editor is complete! Save all of your changes, and restart your application.
+
+### Pagination of Entries
+
+Our final task is paging through lists of entries. With the work done in our admin section, this should be a piece of cake. First thing we can do is add an action that takes a page number, optionally. We already have an action to show entries, let's add a new one that accepts `page/#` on the end, going to the same controller action.
+
+    /page/[page]                      GET      Entries.list
+
+Now, open `src/Controller/Entries.vala`. In our `list` method, look for that optional capture, and set a sensible default.
+
+    int page = 1;
+    var page_string = state.request.get_capture("page");
+    if ( page_string != null ) {
+    	page = int.parse(page_string);
+    }
+
+We have a page number, so using the changes we made to this query for our dashboard, make sure our current query also supports pagination. Since we have to compute pages, we need to break this up a bit. Change the call slightly: Change your variable name to `search`, move out the order_by, and omit the final `.list()`.
+
+    var search = new Almanna.Search<Entry>()          // Create a Search
+    				.relationship("publisher");       // Use publisher relationship
+
+Now, using that search, let's get the total number of entries and compute the number of pages based on that count.
+
+    int pages = 1 + (int) ( (double) search.count() / 10 - 0.1 );
+
+Then, perform the search with `list()`, but add our pagination methods, `rows()` and `page()`.
+
+    var entries = search
+    				.order_by( "date_created", true ) // Order by, descending
+    				.rows(10)                         // Show 10 entries per page
+    				.page(page)                       // Use page from page var
+    				.list();
+
+Finally, let's send our computed page and page count to the view so it knows how to tell the user what to do.
+
+    return new Template.Entries.list( entries, page, pages );
+
+The controller is now set up for proper pagination, so we just need to show the user how to navigate pages. Open `src/View/Template/Entries/list.vtmpl`, and change the `@parameters` directive to also take the page integer.
+
+    @parameters( ArrayList<Entry> entries, int page, int pages )
+
+Now, add a div after the entry list. Check if the page is greater than 1, and if so, show a link to the last page. Then, check if the number of pages is greater than the current page, and if so, show a link to go to the next page.
+
+    <div style="text-align: center">
+    @if ( page > 1 ) {
+    	<a href="/page/@{(page - 1).to_string()}">&lt; Last Page</a>
+    @}
+    @if ( pages > page ) {
+    	<a href="/page/@{(page + 1).to_string()}">Next Page &gt;</a>
+    @}
+
+Pagination is complete! Reload your application, add some entries, and browse through pages.
+
+[[tutorial/blog/summary|Go on to Part Seven - Summary >>]]
+
+</section>
+</div>
